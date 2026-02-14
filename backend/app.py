@@ -102,8 +102,11 @@ def create_app(config_name=None):
 
     return app
 
+# Create app instance for gunicorn
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
+    #app = create_app()
     print("Starting Enhanced Flask server...")
     print("API will be available at: http://127.0.0.1:5000")
     print("\n=== MODULAR ARCHITECTURE ===")
