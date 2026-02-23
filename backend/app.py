@@ -10,6 +10,30 @@ from extensions import init_extensions, db, scheduler
 from models import *
 from utils import *
 
+def _seed_admin():
+    """Create default admin on first startup if no admin exists."""
+    try:
+        from models.user import User
+        from werkzeug.security import generate_password_hash
+        if not User.query.filter_by(role='admin').first():
+            admin = User(
+                username='admin',
+                password_hash=generate_password_hash('Admin@123'),
+                role='admin',
+                full_name='System Admin',
+                email='admin@school.com',
+                is_active=True
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print('[Seed] Default admin created: username=admin password=Admin@123')
+        else:
+            print('[Seed] Admin already exists, skipping seed.')
+    except Exception as e:
+        print(f'[Seed] Admin seed failed: {e}')
+        db.session.rollback()
+
+
 def create_app(config_name=None):
     """Application factory pattern"""
     app = Flask(__name__)
@@ -24,9 +48,10 @@ def create_app(config_name=None):
     # Initialize extensions (Flask-CORS will handle all CORS automatically)
     init_extensions(app)
 
-    # Create database tables
+    # Create database tables and seed default admin if needed
     with app.app_context():
         db.create_all()
+        _seed_admin()
 
     # Register routes
     from routes.auth_routes import auth_bp
