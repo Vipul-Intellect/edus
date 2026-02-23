@@ -1,9 +1,10 @@
-flask
+﻿flask
 flask-sqlalchemy
 flask-cors
 flask-mail
 psycopg2-binary
 python-dotenv
+PyJWT
 google-auth
 google-auth-oauthlib
 google-api-python-client
@@ -11,3 +12,5 @@ requests
 APScheduler
 pytz
 cryptography
+gunicorn
+werkzeug
