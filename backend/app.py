@@ -68,7 +68,7 @@ def create_app(config_name=None):
     from routes.faculty_routes import get_rooms_status
     from utils.decorators import token_required
     app.add_url_rule('/rooms/status', 'get_rooms_status', token_required(get_rooms_status), methods=['GET', 'OPTIONS'])
-    app.register_blueprint(leave_bp, url_prefix='/leave')
+    app.register_blueprint(leave_bp, url_prefix='/api/leave')
     app.register_blueprint(upload_bp, url_prefix='/upload')
     app.register_blueprint(chat_bp, url_prefix='/api')
     app.register_blueprint(legacy_bp)
@@ -125,7 +125,9 @@ def create_app(config_name=None):
 # Create app instance for gunicorn
 app = create_app()
 
-# Start background scheduler for Google Calendar sync
+# Start background scheduler for Google Calendar sync (only if APScheduler is available)
+from extensions import SCHEDULER_AVAILABLE, scheduler
+
 def _background_sync():
     with app.app_context():
         try:
@@ -134,23 +136,23 @@ def _background_sync():
         except Exception as e:
             print(f"[GCal BG] Scheduler error: {e}")
 
-scheduler.add_job(
-    _background_sync,
-    trigger='interval',
-    hours=6,
-    id='gcal_sync',
-    replace_existing=True
-)
-scheduler.start()
+if SCHEDULER_AVAILABLE and scheduler is not None:
+    try:
+        scheduler.add_job(
+            _background_sync,
+            trigger='interval',
+            hours=6,
+            id='gcal_sync',
+            replace_existing=True
+        )
+        scheduler.start()
+        print("[GCal] Background sync scheduler started (every 6h)")
+    except Exception as e:
+        print(f"[GCal] Scheduler failed to start: {e}")
+else:
+    print("[GCal] APScheduler not available — background sync disabled. Install 'APScheduler' to enable.")
 
 if __name__ == "__main__":
-    #app = create_app()
     print("Starting Enhanced Flask server...")
     print("API will be available at: http://127.0.0.1:5000")
-    print("\n=== MODULAR ARCHITECTURE ===")
-    print("✅ Models: Separate database models")
-    print("✅ Routes: Organized API endpoints")
-    print("✅ Services: Business logic layer")
-    print("✅ Utils: Helper functions and decorators")
-    print("===============================")
     app.run(debug=True, host='0.0.0.0', port=5000)
