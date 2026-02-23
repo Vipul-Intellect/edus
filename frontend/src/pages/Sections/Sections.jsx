@@ -28,8 +28,12 @@ export default function Sections() {
                 api.getSections(),
                 api.getDepartments()
             ]);
-            setSections(sectionsData);
-            setDepartments(departmentsData);
+
+            const sectionList = Array.isArray(sectionsData) ? sectionsData : (sectionsData?.sections || sectionsData?.data || []);
+            const deptList = Array.isArray(departmentsData) ? departmentsData : (departmentsData?.departments || departmentsData?.data || []);
+
+            setSections(sectionList);
+            setDepartments(deptList);
             setIsLoading(false);
         } catch (error) {
             console.error('Error loading data:', error);

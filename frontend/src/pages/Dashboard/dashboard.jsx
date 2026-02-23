@@ -67,15 +67,18 @@ export default function Dashboard() {
       ]);
 
       setStats({
-        courses: courses ? courses.length : 0,
-        teachers: teachers ? teachers.length : 0,
-        rooms: rooms ? rooms.length : 0,
-        classes: timeSlots ? timeSlots.length : 0,
-        timeSlots: timeSlots ? timeSlots.length : 0
+        courses: courses ? (Array.isArray(courses) ? courses.length : (courses.courses?.length || 0)) : 0,
+        teachers: teachers ? (Array.isArray(teachers) ? teachers.length : (teachers.faculty?.length || 0)) : 0,
+        rooms: rooms ? (Array.isArray(rooms) ? rooms.length : (rooms.rooms?.length || 0)) : 0,
+        classes: timeSlots ? (Array.isArray(timeSlots) ? timeSlots.length : (timeSlots.timetable?.length || 0)) : 0,
+        timeSlots: timeSlots ? (Array.isArray(timeSlots) ? timeSlots.length : (timeSlots.timetable?.length || 0)) : 0
       });
 
-      setSwapRequests(swaps || []);
-      setLeaveRequests(leaves || []);
+      const swapList = Array.isArray(swaps) ? swaps : (swaps?.requests || swaps?.swap_requests || swaps?.data || []);
+      const leaveList = Array.isArray(leaves) ? leaves : (leaves?.requests || leaves?.leave_requests || leaves?.data || []);
+
+      setSwapRequests(swapList);
+      setLeaveRequests(leaveList);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }

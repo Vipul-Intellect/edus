@@ -43,7 +43,8 @@ const RegisterUser = () => {
     const fetchDepartments = async () => {
         try {
             const data = await ApiService.getDepartments();
-            setDepartments(data || []);
+            const list = Array.isArray(data) ? data : (data?.departments || data?.data || []);
+            setDepartments(list);
         } catch (err) {
             console.error("Failed to fetch departments", err);
             setError("Failed to load departments.");
@@ -55,7 +56,8 @@ const RegisterUser = () => {
     const fetchSections = async () => {
         try {
             const data = await ApiService.getSections(formData.dept_name, formData.year);
-            setSections(data || []);
+            const list = Array.isArray(data) ? data : (data?.sections || data?.data || []);
+            setSections(list);
         } catch (err) {
             console.error("Failed to fetch sections", err);
         }

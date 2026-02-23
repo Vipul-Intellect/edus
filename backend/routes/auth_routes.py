@@ -166,3 +166,51 @@ def setup_admin():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+
+@auth_bp.route("/setup/migrate_users", methods=["POST"])
+def migrate_users():
+    import os, traceback
+    secret = os.environ.get("SETUP_SECRET", "")
+    if not secret or secret == "disabled":
+        return jsonify({"error": "Setup endpoint is disabled"}), 403
+
+    data = request.json or {}
+    if data.get("setup_key") != secret:
+        return jsonify({"error": "Invalid setup key"}), 403
+
+    users_data = data.get("users", [])
+    if not users_data:
+        return jsonify({"error": "No user data provided"}), 400
+
+    try:
+        count = 0
+        for u_data in users_data:
+            if not u_data.get('username') or not u_data.get('password_hash'):
+                continue
+                
+            existing = User.query.filter_by(username=u_data['username']).first()
+            if existing:
+                # Update existing user
+                existing.password_hash = u_data['password_hash']
+                existing.role = u_data.get('role', existing.role)
+                existing.full_name = u_data.get('full_name', existing.full_name)
+                existing.email = u_data.get('email', existing.email)
+                existing.is_active = u_data.get('is_active', True)
+            else:
+                # Create new user
+                new_user = User(
+                    username=u_data['username'],
+                    password_hash=u_data['password_hash'],
+                    role=u_data.get('role', 'student'),
+                    full_name=u_data.get('full_name', ''),
+                    email=u_data.get('email', ''),
+                    is_active=u_data.get('is_active', True)
+                )
+                db.session.add(new_user)
+            count += 1
+        
+        db.session.commit()
+        return jsonify({"message": f"Successfully migrated {count} users"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500

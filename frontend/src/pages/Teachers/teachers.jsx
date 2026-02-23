@@ -29,11 +29,12 @@ export default function Teachers() {
         api.getFaculty(),
         api.getDepartments()
       ]);
-      console.log('[Teachers] Received teachersData:', teachersData);
-      console.log('[Teachers] Received departmentsData:', departmentsData);
-      console.log('[Teachers] Number of teachers:', teachersData?.length || 0);
-      setTeachers(teachersData);
-      setDepartments(departmentsData);
+
+      const teacherList = Array.isArray(teachersData) ? teachersData : (teachersData?.faculty || teachersData?.data || []);
+      const deptList = Array.isArray(departmentsData) ? departmentsData : (departmentsData?.departments || departmentsData?.data || []);
+
+      setTeachers(teacherList);
+      setDepartments(deptList);
       setIsLoading(false);
       console.log('[Teachers] Data loading complete, isLoading set to false');
     } catch (error) {

@@ -43,7 +43,8 @@ export default function AdminLeaveApproval() {
         setIsLoading(true);
         try {
             const data = await ApiService.adminGetAllLeaveRequests(statusFilter);
-            setRequests(Array.isArray(data) ? data : []);
+            const list = Array.isArray(data) ? data : (data?.leave_requests || data?.requests || data?.data || []);
+            setRequests(list);
         } catch (e) {
             showToast('Failed to fetch requests', 'error');
         } finally {

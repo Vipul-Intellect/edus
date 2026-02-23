@@ -32,9 +32,14 @@ export default function Students() {
                 api.getDepartments(),
                 api.getSections()
             ]);
-            setStudents(studentsData);
-            setDepartments(departmentsData);
-            setSections(sectionsData);
+
+            const studentList = Array.isArray(studentsData) ? studentsData : (studentsData?.students || studentsData?.data || []);
+            const deptList = Array.isArray(departmentsData) ? departmentsData : (departmentsData?.departments || departmentsData?.data || []);
+            const sectionList = Array.isArray(sectionsData) ? sectionsData : (sectionsData?.sections || sectionsData?.data || []);
+
+            setStudents(studentList);
+            setDepartments(deptList);
+            setSections(sectionList);
             setIsLoading(false);
         } catch (error) {
             console.error('Error loading data:', error);

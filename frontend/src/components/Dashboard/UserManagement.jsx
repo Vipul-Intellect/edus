@@ -32,7 +32,8 @@ export default function UserManagement() {
         try {
             setIsLoading(true);
             const data = await ApiService.getUsers();
-            setUsers(data || []);
+            const list = Array.isArray(data) ? data : (data?.users || data?.data || []);
+            setUsers(list);
         } catch (error) {
             console.error("Failed to fetch users:", error);
             alert("Failed to load users");

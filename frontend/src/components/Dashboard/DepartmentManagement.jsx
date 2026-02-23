@@ -24,7 +24,9 @@ export default function DepartmentManagement() {
         try {
             setIsLoading(true);
             const data = await ApiService.getDepartments();
-            setDepartments(data || []);
+            // API may return { departments: [...] } or a plain array
+            const list = Array.isArray(data) ? data : (data?.departments || data?.data || []);
+            setDepartments(list);
         } catch (error) {
             console.error("Failed to fetch departments:", error);
         } finally {

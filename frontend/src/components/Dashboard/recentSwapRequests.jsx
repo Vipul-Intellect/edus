@@ -55,7 +55,7 @@ export default function RecentSwapRequests({ requests = [], isLoading = false, o
             </CardHeader>
             <CardContent>
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                    {requests.length === 0 ? (
+                    {(!Array.isArray(requests) || requests.length === 0) ? (
                         <div className="text-center py-8 text-gray-500">
                             No pending swap requests
                         </div>

@@ -30,12 +30,16 @@ export default function Courses() {
       api.getCoursesLegacy(),
       api.getSections()
     ]);
-    setCourses(coursesData);
-    setSections(sectionsData);
+
+    const courseList = Array.isArray(coursesData) ? coursesData : (coursesData?.courses || coursesData?.data || []);
+    const sectionList = Array.isArray(sectionsData) ? sectionsData : (sectionsData?.sections || sectionsData?.data || []);
+
+    setCourses(courseList);
+    setSections(sectionList);
 
     // Extract unique departments from sections
     const uniqueDepts = [...new Set(
-      sectionsData
+      sectionList
         .map(s => s.dept_name)
         .filter(Boolean)
     )];
