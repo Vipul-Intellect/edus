@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Bell, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { Bell, Send, CheckCircle, AlertCircle, Search } from 'lucide-react';
 import ApiService from '../../services/api';
 
 const AdminNotificationManager = () => {
@@ -18,6 +18,27 @@ const AdminNotificationManager = () => {
     });
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState({ type: '', message: '' });
+    const [users, setUsers] = useState([]);
+    
+    // Custom Combobox State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showDropdown, setShowDropdown] = useState(false);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await ApiService.getUsers();
+                if (Array.isArray(response)) {
+                    setUsers(response);
+                } else if (response && Array.isArray(response.users)) {
+                    setUsers(response.users);
+                }
+            } catch (err) {
+                console.error("Failed to fetch users:", err);
+            }
+        };
+        fetchUsers();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -43,6 +64,9 @@ const AdminNotificationManager = () => {
             if (formData.target_audience === 'role') {
                 payload.target_role = formData.target_role;
             } else if (formData.target_audience === 'user') {
+                if (!formData.target_user_id) {
+                    throw new Error("Please select a valid user from the dropdown.");
+                }
                 payload.target_user_id = formData.target_user_id;
             }
 
@@ -61,6 +85,7 @@ const AdminNotificationManager = () => {
                 target_role: 'student',
                 target_user_id: ''
             });
+            setSearchQuery('');
 
         } catch (err) {
             console.error(err);
@@ -72,6 +97,14 @@ const AdminNotificationManager = () => {
             setLoading(false);
         }
     };
+
+    const filteredUsers = users.filter(u => {
+        const rawName = u.full_name || u.name || '';
+        const nameMatch = rawName.toLowerCase().includes(searchQuery.toLowerCase());
+        const usernameMatch = (u.username || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const idMatch = ((u.id || u.user_id || '') + '').toLowerCase().includes(searchQuery.toLowerCase());
+        return nameMatch || usernameMatch || idMatch;
+    });
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -105,7 +138,10 @@ const AdminNotificationManager = () => {
                                 <Label htmlFor="target_audience">Target Audience</Label>
                                 <Select
                                     value={formData.target_audience}
-                                    onValueChange={(val) => handleSelectChange('target_audience', val)}
+                                    onValueChange={(val) => {
+                                        handleSelectChange('target_audience', val);
+                                        if (val !== 'user') setSearchQuery('');
+                                    }}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select audience" />
@@ -113,7 +149,7 @@ const AdminNotificationManager = () => {
                                     <SelectContent>
                                         <SelectItem value="all">All Users</SelectItem>
                                         <SelectItem value="role">Specific Role</SelectItem>
-                                        <SelectItem value="user">Specific User (ID)</SelectItem>
+                                        <SelectItem value="user">Specific User (Name & Username)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -138,16 +174,55 @@ const AdminNotificationManager = () => {
                             )}
 
                             {formData.target_audience === 'user' && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="target_user_id">User ID</Label>
-                                    <Input
-                                        id="target_user_id"
-                                        name="target_user_id"
-                                        placeholder="Enter User ID"
-                                        value={formData.target_user_id}
-                                        onChange={handleChange}
-                                        required
-                                    />
+                                <div className="space-y-2 relative">
+                                    <Label htmlFor="target_user_id">Search User</Label>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <Input
+                                            className="pl-9"
+                                            placeholder="Type name or username..."
+                                            value={searchQuery}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value);
+                                                setShowDropdown(true);
+                                                handleSelectChange('target_user_id', ''); // clear actual selection while typing
+                                            }}
+                                            onFocus={() => setShowDropdown(true)}
+                                            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                                            required={!formData.target_user_id}
+                                        />
+                                    </div>
+                                    
+                                    {showDropdown && (
+                                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                            {filteredUsers.length > 0 ? (
+                                                filteredUsers.map((u) => {
+                                                    const userId = u.id || u.user_id;
+                                                    const displayName = u.full_name || u.name || 'Unknown User';
+                                                    const displayUsername = u.username ? `(@${u.username})` : '';
+                                                    return (
+                                                        <div 
+                                                            key={userId} 
+                                                            className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 flex justify-between items-center"
+                                                            onMouseDown={(e) => {
+                                                                e.preventDefault(); // Prevent input from losing focus
+                                                                handleSelectChange('target_user_id', userId);
+                                                                setSearchQuery(`${displayName} ${displayUsername}`);
+                                                                setShowDropdown(false);
+                                                            }}
+                                                        >
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium text-gray-900">{displayName} <span className="text-gray-500 font-normal">{displayUsername}</span></span>
+                                                            </div>
+                                                            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full capitalize">{u.role}</span>
+                                                        </div>
+                                                    );
+                                                })
+                                            ) : (
+                                                <div className="px-4 py-3 text-sm text-gray-500 italic text-center">No users found matching "{searchQuery}"</div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

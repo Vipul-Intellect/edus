@@ -56,8 +56,13 @@ export default function RecentSwapRequests({ requests = [], isLoading = false, o
             <CardContent>
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                     {(!Array.isArray(requests) || requests.length === 0) ? (
-                        <div className="text-center py-8 text-gray-500">
-                            No pending swap requests
+                        <div className="text-center py-10 px-4">
+                            <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <ArrowRightLeft className="w-8 h-8 text-orange-300" />
+                            </div>
+                            <h3 className="text-base font-semibold text-gray-700 mb-1">All clear!</h3>
+                            <p className="text-sm text-gray-400">No pending swap requests right now.</p>
+                            <p className="text-xs text-gray-300 mt-2">New requests from teachers will appear here.</p>
                         </div>
                     ) : (
                         requests.map((request) => (

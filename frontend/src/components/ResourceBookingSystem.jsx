@@ -122,7 +122,7 @@ const ResourceBookingSystem = () => {
             <div>
                 <h2 className="text-2xl font-bold mb-4">Available Resources</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {resources.map(resource => (
+                    {(Array.isArray(resources) ? resources : []).map(resource => (
                         <Card key={resource.id} className="hover:shadow-md transition">
                             <CardContent className="pt-6">
                                 <div className="flex justify-between items-start mb-2">
@@ -255,7 +255,7 @@ const ResourceBookingSystem = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {bookings.length === 0 ? (
+                                {(!Array.isArray(bookings) || bookings.length === 0) ? (
                                     <tr><td colSpan="6" className="p-4 text-center text-gray-500">No bookings found</td></tr>
                                 ) : (
                                     bookings.map(booking => (

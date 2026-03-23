@@ -14,9 +14,7 @@ const typeColors = {
 
 export default function RoomCard({ room, onEdit }) {
   return (
-    <Card className={`bg-white/80 backdrop-blur-sm border-blue-200 hover:shadow-lg transition-all duration-300 ${
-      !room.is_active ? 'opacity-60' : ''
-    }`}>
+    <Card className={`bg-white/80 backdrop-blur-sm border-blue-200 hover:shadow-lg transition-all duration-300`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -43,8 +41,8 @@ export default function RoomCard({ room, onEdit }) {
           <Badge className={typeColors[room.type] || "bg-gray-100 text-gray-800 border-gray-200"}>
             {room.type}
           </Badge>
-          <Badge variant={room.is_active ? "default" : "secondary"}>
-            {room.is_active ? "Active" : "Inactive"}
+          <Badge className={room.is_active ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-200" : "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"}>
+            {room.is_active ? "Occupied (Active)" : "Available"}
           </Badge>
         </div>
         

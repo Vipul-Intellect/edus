@@ -31,7 +31,10 @@ const StudentPerformanceDashboard = () => {
     if (loading) return <div className="text-center py-8">Loading performance data...</div>;
     if (!performanceData) return <div className="text-center py-8">No performance data available.</div>;
 
-    const { student_info, overall_attendance, overall_grade, courses } = performanceData;
+    const student_info = performanceData.student_info || {};
+    const overall_attendance = performanceData.overall_attendance || 0;
+    const overall_grade = performanceData.overall_grade || 0;
+    const courses = Array.isArray(performanceData.courses) ? performanceData.courses : [];
 
     const getGradeColor = (grade) => {
         if (!grade) return 'bg-gray-100 text-gray-800';
@@ -49,11 +52,11 @@ const StudentPerformanceDashboard = () => {
                     <CardContent>
                         <div className="text-center">
                             <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-gray-500">
-                                {student_info.name.charAt(0)}
+                                {student_info.name?.charAt(0) || '?'}
                             </div>
-                            <h3 className="font-bold text-lg">{student_info.name}</h3>
-                            <p className="text-gray-500">{student_info.roll_number}</p>
-                            <p className="text-sm text-gray-400 mt-1">Year {student_info.year} • Dept {student_info.department_id}</p>
+                            <h3 className="font-bold text-lg">{student_info.name || 'Student'}</h3>
+                            <p className="text-gray-500">{student_info.roll_number || 'N/A'}</p>
+                            <p className="text-sm text-gray-400 mt-1">Year {student_info.year || '-'} • Dept {student_info.department_id || '-'}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -83,7 +86,7 @@ const StudentPerformanceDashboard = () => {
 
             <h3 className="text-xl font-bold mt-8 mb-4">Course Performance</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {courses.map(course => (
+                {courses.length > 0 ? courses.map(course => (
                     <Card key={course.course_id} className="hover:shadow-md transition-shadow">
                         <CardContent className="pt-6">
                             <div className="flex justify-between items-start mb-4">
@@ -131,7 +134,11 @@ const StudentPerformanceDashboard = () => {
                             </div>
                         </CardContent>
                     </Card>
-                ))}
+                )) : (
+                    <div className="col-span-full py-12 text-center text-gray-500 bg-white rounded-lg border">
+                        No course performance records found.
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -43,7 +43,7 @@ export default function AdminTimetableEditor() {
     useEffect(() => { fetchTimetable(); }, [fetchTimetable]);
 
     const startEdit = (entry) => {
-        setEditingId(entry.timetable_id);
+        setEditingId(entry.id);
         setEditData({
             day: entry.day || '',
             start_time: entry.start_time || '',
@@ -179,15 +179,15 @@ export default function AdminTimetableEditor() {
                         </div>
                     ) : (
                         <div className="space-y-2 max-h-[560px] overflow-y-auto pr-1">
-                            {filtered.map(entry => (
+                            {filtered.map((entry, index) => (
                                 <div
-                                    key={entry.timetable_id}
-                                    className={`border rounded-xl p-4 transition-all duration-200 ${editingId === entry.timetable_id
+                                    key={entry.id || `entry-${index}`}
+                                    className={`border rounded-xl p-4 transition-all duration-200 ${editingId === entry.id
                                             ? 'border-indigo-300 bg-indigo-50/40 shadow-md'
                                             : 'bg-white hover:shadow-sm hover:border-gray-300'
                                         }`}
                                 >
-                                    {editingId === entry.timetable_id ? (
+                                    {editingId === entry.id ? (
                                         /* ── Edit Mode ── */
                                         <div className="space-y-3">
                                             <div className="grid grid-cols-2 gap-3">
@@ -246,7 +246,7 @@ export default function AdminTimetableEditor() {
                                                     size="sm"
                                                     className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1"
                                                     disabled={actionLoading}
-                                                    onClick={() => handleSave(entry.timetable_id)}
+                                                    onClick={() => handleSave(entry.id)}
                                                 >
                                                     <Save className="w-3.5 h-3.5" />
                                                     {actionLoading ? 'Saving...' : 'Save Changes'}
@@ -284,7 +284,7 @@ export default function AdminTimetableEditor() {
                                                     <Edit3 className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setDeleteConfirm(entry.timetable_id)}
+                                                    onClick={() => setDeleteConfirm(entry.id)}
                                                     className="p-1.5 rounded-lg hover:bg-red-100 text-red-600 transition"
                                                     title="Delete entry"
                                                 >

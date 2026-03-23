@@ -119,7 +119,7 @@ export default function Teachers() {
                   className="border border-gray-300 rounded-lg px-3 py-2 bg-white"
                 >
                   <option value="all">All Departments</option>
-                  {departments.map(dept => (
+                  {(Array.isArray(departments) ? departments : []).map(dept => (
                     <option key={dept.id} value={dept.dept_name}>{dept.dept_name}</option>
                   ))}
                 </select>

@@ -265,6 +265,10 @@ class ApiService {
     return this.makeRequest(`/admin/leave-requests?status=${status}`);
   }
 
+  async getRoomStatus() {
+    return this.makeRequest('/rooms/status');
+  }
+
   async getUsers() {
     return this.makeRequest('/admin/users');
   }
@@ -717,11 +721,11 @@ class ApiService {
   }
 
   async getChatHistory() {
-    return this.makeRequest('/api/chat/conversation');
+    return this.makeRequest('/api/conversation');
   }
 
   async clearChatHistory() {
-    return this.makeRequest('/api/chat/clear', {
+    return this.makeRequest('/api/clear', {
       method: 'POST'
     });
   }
@@ -994,6 +998,24 @@ class ApiService {
   async adminDeleteTimetable(id) {
     return this.makeRequest('/api/admin/timetable/' + id, { method: 'DELETE' });
   }
+
+  async getMeetings() {
+    return this.makeRequest('/api/meetings');
+  }
+
+  async adminCreateMeeting(meetingData) {
+    return this.makeRequest('/api/meetings/create', {
+      method: 'POST',
+      body: JSON.stringify(meetingData)
+    });
+  }
+    async getCalendarStatus() {
+        return this.makeRequest('/api/calendar/status');
+    }
+
+    async createMeeting(meetingData) {
+        return this.adminCreateMeeting(meetingData);
+    }
 }
 
 export default new ApiService();

@@ -230,7 +230,7 @@ const NotificationCenter = ({ position = 'bottom-right' }) => {
                                 </div>
                             ) : (
                                 <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                                    {notifications.map(notif => (
+                                    {(Array.isArray(notifications) ? notifications : []).map(notif => (
                                         <div
                                             key={notif.id}
                                             className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer ${!notif.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10 border-l-2 border-blue-500' : 'border-l-2 border-transparent'}`}

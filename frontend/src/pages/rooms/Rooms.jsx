@@ -59,9 +59,48 @@ export default function Rooms() {
 
   const loadRooms = async () => {
     setIsLoading(true);
-    const data = await api.getRoomsLegacy();
-    setRooms(data);
-    setIsLoading(false);
+    try {
+      const [roomsData, statusData] = await Promise.all([
+        api.getRoomsLegacy(),
+        api.getRoomStatus().catch(() => ({ occupied_rooms: [], free_rooms: [], unmarked_rooms: [] }))
+      ]);
+
+      const occupiedIds = new Set((statusData.occupied_rooms || []).map(r => r.room_id || r.id));
+
+      const enhancedRooms = roomsData.map(room => {
+        // Extract room number and building from name if formatted like "BuildingName-101"
+        // Otherwise just use the name as the number.
+        let number = room.name || `ID-${room.id}`;
+        let building = "Main Campus";
+        if (room.name && room.name.includes('-')) {
+            const parts = room.name.split('-');
+            building = parts[0];
+            number = parts.slice(1).join('-');
+        }
+
+        const roomType = room.name.toLowerCase().includes('lab') ? 'Laboratory' :
+                         room.name.toLowerCase().includes('auditorium') ? 'Auditorium' :
+                         room.name.toLowerCase().includes('seminar') ? 'Seminar Room' :
+                         room.resources?.toLowerCase().includes('computer') ? 'Computer Lab' : 'Classroom';
+
+        const isActive = occupiedIds.has(room.id);
+
+        return {
+          ...room,
+          number,
+          building,
+          type: roomType,
+          is_active: isActive, // We equate "active" to "currently occupied/in-use"
+          facilities: room.resources ? room.resources.split(',').map(s => s.trim()) : []
+        };
+      });
+      
+      setRooms(enhancedRooms);
+    } catch (err) {
+      console.error("Failed to load rooms:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (roomData) => {

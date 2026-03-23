@@ -44,6 +44,8 @@ export default function Students() {
         } catch (error) {
             console.error('Error loading data:', error);
             setStudents([]);
+            setDepartments([]);
+            setSections([]);
             setIsLoading(false);
         }
     };
@@ -112,7 +114,7 @@ export default function Students() {
                                     className="border border-gray-300 rounded-lg px-3 py-2 bg-white"
                                 >
                                     <option value="all">All Departments</option>
-                                    {departments.map(dept => (
+                                    {(Array.isArray(departments) ? departments : []).map(dept => (
                                         <option key={dept.id} value={dept.dept_name}>{dept.dept_name}</option>
                                     ))}
                                 </select>
@@ -133,7 +135,7 @@ export default function Students() {
                                     className="border border-gray-300 rounded-lg px-3 py-2 bg-white"
                                 >
                                     <option value="all">All Sections</option>
-                                    {[...new Set(sections.map(s => s.name))].sort().map(sectionName => (
+                                    {[...new Set((Array.isArray(sections) ? sections : []).map(s => s.name))].sort().map(sectionName => (
                                         <option key={sectionName} value={sectionName}>{sectionName}</option>
                                     ))}
                                 </select>

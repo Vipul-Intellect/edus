@@ -116,9 +116,9 @@ export default function Courses() {
                   className="border border-gray-300 rounded-lg px-3 py-2 bg-white"
                 >
                   <option value="all">All Departments</option>
-                  {departments.map((dept, index) => (
+                  {departments && Array.isArray(departments) ? departments.map((dept, index) => (
                     <option key={`dept-${dept}-${index}`} value={dept}>{dept}</option>
-                  ))}
+                  )) : null}
                 </select>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function Courses() {
               </p>
             </div>
           ) : (
-            filteredCourses.map((course, index) => (
+            (Array.isArray(filteredCourses) ? filteredCourses : []).map((course, index) => (
               <CourseCard
                 key={course.id || course.course_id || `course-${index}`}
                 course={course}

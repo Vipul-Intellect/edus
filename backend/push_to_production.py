@@ -14,7 +14,15 @@ print("=" * 60)
 print("Local to Production User Migration Tool")
 print("=" * 60)
 
-RENDER_URL = input("\nEnter your Render backend URL (e.g., https://your-app.onrender.com): ").strip()
+# Handle arguments or environment variables for non-interactive mode
+if len(sys.argv) > 1:
+    RENDER_URL = sys.argv[1]
+else:
+    RENDER_URL = os.environ.get("RENDER_URL")
+
+if not RENDER_URL:
+    RENDER_URL = input("\nEnter your Render backend URL (e.g., https://your-app.onrender.com): ").strip()
+
 if not RENDER_URL:
     print("Error: Render URL is required.")
     sys.exit(1)
@@ -26,7 +34,11 @@ if RENDER_URL.endswith('/'):
 if RENDER_URL.endswith('/api'):
     RENDER_URL = RENDER_URL[:-4]
 
-SETUP_SECRET = os.environ.get("SETUP_SECRET")
+if len(sys.argv) > 2:
+    SETUP_SECRET = sys.argv[2]
+else:
+    SETUP_SECRET = os.environ.get("SETUP_SECRET")
+
 if not SETUP_SECRET:
     SETUP_SECRET = input("Enter your SETUP_SECRET (same as set on Render): ").strip()
 

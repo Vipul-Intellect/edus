@@ -35,7 +35,7 @@ const GoogleCalendarConnect = () => {
     const handleConnect = async () => {
         try {
             setIsLoading(true);
-            const redirectUri = `${window.location.origin}${window.location.pathname}`;
+            const redirectUri = `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "");
             const data = await ApiService.getGoogleAuthUrl(redirectUri);
             if (data?.url) {
                 window.location.href = data.url;
@@ -50,7 +50,7 @@ const GoogleCalendarConnect = () => {
         try {
             setIsLoading(true);
             setMessage('Connecting to Google Calendar...');
-            const redirectUri = `${window.location.origin}${window.location.pathname}`;
+            const redirectUri = `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "");
             await ApiService.connectGoogleCalendar(code, redirectUri);
             setMessage('✅ Google Calendar connected & synced!');
             await checkStatus();

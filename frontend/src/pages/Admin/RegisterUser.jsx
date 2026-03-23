@@ -162,7 +162,7 @@ const RegisterUser = () => {
                                         <SelectValue placeholder="Select Department" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {departments.map(d => (
+                                        {(Array.isArray(departments) ? departments : []).map(d => (
                                             <SelectItem key={d.id} value={d.dept_name}>
                                                 {d.dept_name}
                                             </SelectItem>
@@ -263,7 +263,7 @@ const RegisterUser = () => {
                                                 <SelectValue placeholder="Select Section" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {sections.map(s => (
+                                                {(Array.isArray(sections) ? sections : []).map(s => (
                                                     <SelectItem key={s.id} value={s.name}>
                                                         Section {s.name}
                                                     </SelectItem>

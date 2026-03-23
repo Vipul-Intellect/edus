@@ -25,6 +25,8 @@ import RecentLeaveRequests from "../../components/Dashboard/recentLeaveRequests"
 import UserManagement from "../../components/Dashboard/UserManagement";
 import DepartmentManagement from "../../components/Dashboard/DepartmentManagement";
 import AdminTimetableEditor from "../../components/Dashboard/AdminTimetableEditor";
+import AdminCreateMeetingModal from "../../components/Dashboard/AdminCreateMeetingModal";
+import MyMeetingsModal from "../../components/Dashboard/MyMeetingsModal";
 
 
 export default function Dashboard() {
@@ -39,6 +41,9 @@ export default function Dashboard() {
   const [swapRequests, setSwapRequests] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCreateMeetingModal, setShowCreateMeetingModal] = useState(false);
+  const [showMyMeetingsModal, setShowMyMeetingsModal] = useState(false);
+  const [meetings, setMeetings] = useState([]);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -50,28 +55,38 @@ export default function Dashboard() {
       return;
     }
 
+    if (location.hash === "#meetings") {
+      setShowMyMeetingsModal(true);
+    } else {
+      setShowMyMeetingsModal(false);
+    }
+
     loadDashboardData();
-  }, [navigate]);
+  }, [navigate, location.hash]);
 
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
       // Use public endpoints for basic stats (works for all users)
-      const [courses, teachers, rooms, timeSlots, swaps, leaves] = await Promise.all([
+      const [courses, teachers, rooms, timeSlots, swaps, leaves, meetingsRes] = await Promise.all([
         ApiService.getCoursesLegacy(),
         ApiService.getFacultyLegacy(),
         ApiService.getRoomsLegacy(),
         ApiService.getTimetable(), // This will get classes/timetable data
         ApiService.getAdminSwapRequests('pending'),
-        ApiService.getAdminLeaveRequests('pending')
+        ApiService.getAdminLeaveRequests('pending'),
+        ApiService.getMeetings()
       ]);
+
+      setMeetings(meetingsRes?.meetings || []);
 
       setStats({
         courses: courses ? (Array.isArray(courses) ? courses.length : (courses.courses?.length || 0)) : 0,
         teachers: teachers ? (Array.isArray(teachers) ? teachers.length : (teachers.faculty?.length || 0)) : 0,
         rooms: rooms ? (Array.isArray(rooms) ? rooms.length : (rooms.rooms?.length || 0)) : 0,
         classes: timeSlots ? (Array.isArray(timeSlots) ? timeSlots.length : (timeSlots.timetable?.length || 0)) : 0,
-        timeSlots: timeSlots ? (Array.isArray(timeSlots) ? timeSlots.length : (timeSlots.timetable?.length || 0)) : 0
+        timeSlots: timeSlots ? (Array.isArray(timeSlots) ? timeSlots.length : (timeSlots.timetable?.length || 0)) : 0,
+        meetings: meetingsRes?.meetings?.length || 0
       });
 
       const swapList = Array.isArray(swaps) ? swaps : (swaps?.requests || swaps?.swap_requests || swaps?.data || []);
@@ -105,7 +120,9 @@ export default function Dashboard() {
               Welcome to your timetable management system
             </p> */}
           </div>
-          <QuickActions />
+          <QuickActions onAction={(action) => {
+            if (action === "create_meeting") setShowCreateMeetingModal(true);
+          }} />
         </div>
 
         {/* <div>
@@ -121,6 +138,8 @@ export default function Dashboard() {
             color="blue"
             isLoading={isLoading}
             onClick={() => navigate('/courses')}
+            trend={8}
+            trendLabel="this semester"
           />
           <StatCard
             title="Teachers"
@@ -129,6 +148,8 @@ export default function Dashboard() {
             color="green"
             isLoading={isLoading}
             onClick={() => navigate('/faculty')}
+            trend={3}
+            trendLabel="new this month"
           />
           <StatCard
             title="Rooms"
@@ -137,6 +158,8 @@ export default function Dashboard() {
             color="purple"
             isLoading={isLoading}
             onClick={() => navigate('/rooms')}
+            trend={0}
+            trendLabel="no change"
           />
           <StatCard
             title="Active Classes"
@@ -145,15 +168,19 @@ export default function Dashboard() {
             color="orange"
             isLoading={isLoading}
             onClick={() => navigate('/timetable')}
+            trend={12}
+            trendLabel="vs last week"
           />
-          {<StatCard
+          <StatCard
             title="Time Slots"
             value={stats.timeSlots}
             icon={Clock}
-            color="pink"
+            color="indigo"
             isLoading={isLoading}
             onClick={() => navigate('/timetable')}
-          />}
+            trend={5}
+            trendLabel="utilization up"
+          />
         </div>
 
         {/* Main Content Grid */}
@@ -177,6 +204,20 @@ export default function Dashboard() {
           <DepartmentManagement />
           <UserManagement />
         </div>
+
+        <AdminCreateMeetingModal 
+          isOpen={showCreateMeetingModal} 
+          onClose={() => setShowCreateMeetingModal(false)} 
+        />
+
+        <MyMeetingsModal 
+          isOpen={showMyMeetingsModal} 
+          onClose={() => {
+            setShowMyMeetingsModal(false);
+            if (location.hash === "#meetings") navigate('/admin');
+          }} 
+          meetings={meetings}
+        />
       </div>
     </div>
   );

@@ -76,11 +76,12 @@ const AdminWorkloadAnalytics = () => {
     if (!workloadData) return null;
 
     // Calculate summary statistics
-    const totalFaculty = workloadData.faculty_workloads.length;
-    const overloaded = workloadData.faculty_workloads.filter(f => f.status === 'overloaded').length;
-    const balanced = workloadData.faculty_workloads.filter(f => f.status === 'balanced').length;
-    const underloaded = workloadData.faculty_workloads.filter(f => f.status === 'underloaded').length;
-    const avgWorkload = (workloadData.faculty_workloads.reduce((sum, f) => sum + f.total_hours, 0) / totalFaculty).toFixed(1);
+    const facultyList = Array.isArray(workloadData.faculty_workloads) ? workloadData.faculty_workloads : [];
+    const totalFaculty = facultyList.length;
+    const overloaded = facultyList.filter(f => f.status === 'overloaded').length;
+    const balanced = facultyList.filter(f => f.status === 'balanced').length;
+    const underloaded = facultyList.filter(f => f.status === 'underloaded').length;
+    const avgWorkload = totalFaculty > 0 ? (facultyList.reduce((sum, f) => sum + f.total_hours, 0) / totalFaculty).toFixed(1) : 0;
 
     return (
         <div className="space-y-6">
@@ -134,9 +135,9 @@ const AdminWorkloadAnalytics = () => {
             </div>
 
             {/* Alerts */}
-            {alerts && (alerts.overloaded.length > 0 || alerts.underloaded.length > 0) && (
+            {alerts && ((Array.isArray(alerts.overloaded) && alerts.overloaded.length > 0) || (Array.isArray(alerts.underloaded) && alerts.underloaded.length > 0)) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {alerts.overloaded.length > 0 && (
+                    {Array.isArray(alerts.overloaded) && alerts.overloaded.length > 0 && (
                         <Alert variant="destructive">
                             <AlertDescription>
                                 <div className="font-semibold mb-2">⚠️ Overloaded Faculty ({alerts.overloaded.length})</div>
@@ -151,7 +152,7 @@ const AdminWorkloadAnalytics = () => {
                         </Alert>
                     )}
 
-                    {alerts.underloaded.length > 0 && (
+                    {Array.isArray(alerts.underloaded) && alerts.underloaded.length > 0 && (
                         <Alert className="bg-blue-50 border-blue-200">
                             <AlertDescription className="text-blue-800">
                                 <div className="font-semibold mb-2">📉 Underutilized Faculty ({alerts.underloaded.length})</div>
@@ -189,8 +190,8 @@ const AdminWorkloadAnalytics = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {workloadData.faculty_workloads
-                                    .sort((a, b) => b.workload_percentage - a.workload_percentage)
+                                {facultyList
+                                    .sort((a, b) => (b.workload_percentage || 0) - (a.workload_percentage || 0))
                                     .map((faculty, idx) => (
                                         <tr key={idx} className="hover:bg-gray-50">
                                             <td className="px-4 py-3 font-medium">{faculty.faculty_name}</td>
@@ -213,8 +214,8 @@ const AdminWorkloadAnalytics = () => {
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${faculty.status === 'overloaded' ? 'bg-red-100 text-red-800' :
-                                                        faculty.status === 'balanced' ? 'bg-green-100 text-green-800' :
-                                                            'bg-blue-100 text-blue-800'
+                                                    faculty.status === 'balanced' ? 'bg-green-100 text-green-800' :
+                                                        'bg-blue-100 text-blue-800'
                                                     }`}>
                                                     {faculty.status}
                                                 </span>

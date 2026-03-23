@@ -2,10 +2,17 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "../../utils/navigation";
-import { Plus, Calendar, BookOpen, Users, Bell } from "lucide-react";
+import { Plus, Calendar, BookOpen, Users, Bell, Video } from "lucide-react";
 
-export default function QuickActions() {
+export default function QuickActions({ onAction }) {
   const actions = [
+    {
+      label: "Create Meeting",
+      icon: Video,
+      variant: "default",
+      className: "bg-indigo-600 hover:bg-indigo-700 text-white",
+      action: "create_meeting"
+    },
     {
       label: "View Timetable",
       url: createPageUrl("Timetable"),
@@ -36,23 +43,27 @@ export default function QuickActions() {
   return (
     <div className="flex flex-wrap gap-3">
       {actions.map((action) => (
-        <Link key={action.label} to={action.url}>
+        action.url ? (
+          <Link key={action.label} to={action.url}>
+            <Button
+              variant={action.variant}
+              className={`gap-2 hover:scale-105 transition-all duration-300 shadow-lg ${action.className || ''}`}
+            >
+              <action.icon className="w-4 h-4" />
+              {action.label}
+            </Button>
+          </Link>
+        ) : (
           <Button
+            key={action.label}
             variant={action.variant}
             className={`gap-2 hover:scale-105 transition-all duration-300 shadow-lg ${action.className || ''}`}
+            onClick={() => onAction && onAction(action.action)}
           >
             <action.icon className="w-4 h-4" />
             {action.label}
           </Button>
-
-          {/* <div className="mt-2">
-            <Link to={action.url}>
-              <Button variant="link" className="text-sm">
-                Go to {action.label}
-              </Button>
-            </Link>
-          </div> */}
-        </Link>
+        )
       ))}
     </div>
   );

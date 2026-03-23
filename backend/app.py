@@ -4,7 +4,13 @@ Uses the modular structure with separate models, routes, services, and utils
 """
 
 import os
-from flask import Flask, request
+import traceback
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+from flask import Flask, request, jsonify
 from config import config
 from extensions import init_extensions, db, scheduler
 from models import *
@@ -68,6 +74,7 @@ def create_app(config_name=None):
     from routes.resource_routes import resource_bp
     from routes.notification_routes import notification_bp
     from routes.google_calendar_routes import google_calendar_bp
+    from routes.meeting_routes import meeting_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
@@ -88,6 +95,8 @@ def create_app(config_name=None):
     app.register_blueprint(notification_bp, url_prefix='/api')
     # Google Calendar routes - /api prefix
     app.register_blueprint(google_calendar_bp, url_prefix='/api')
+    # Meeting routes - /api prefix
+    app.register_blueprint(meeting_bp, url_prefix='/api')
     
     # Rooms status route - register separately at root level
     from routes.faculty_routes import get_rooms_status
@@ -128,22 +137,26 @@ def create_app(config_name=None):
             }
         })
 
-    # Error handlers
-    @app.errorhandler(404)
-    def not_found(error):
-        from flask import jsonify
-        return jsonify({"error": "Endpoint not found"}), 404
-
     @app.errorhandler(500)
     def internal_error(error):
-        from flask import jsonify
         db.session.rollback()
-        return jsonify({"error": "Internal server error"}), 500
+        print("!!! INTERNAL SERVER ERROR 500 !!!")
+        print(traceback.format_exc())
+        response = jsonify({"error": "Internal server error", "message": str(error)})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 500
+
+    @app.errorhandler(404)
+    def not_found(error):
+        response = jsonify({"error": "Endpoint not found"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 404
 
     @app.errorhandler(400)
     def bad_request(error):
-        from flask import jsonify
-        return jsonify({"error": "Bad request"}), 400
+        response = jsonify({"error": "Bad request"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 400
 
     return app
 

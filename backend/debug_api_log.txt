@@ -596,3 +596,168 @@ Found 0 swap requests.
 GET /swap-requests: User=Teacher One (ID 4)
 Resolved Faculty ID: 2
 Found 0 swap requests.
+GET /swap-requests: User=Teacher One (ID 4)
+Resolved Faculty ID: 2
+Found 0 swap requests.
+GET /swap-requests: User=Teacher One (ID 4)
+Resolved Faculty ID: 2
+Found 0 swap requests.
+GET /swap-requests: User=Teacher One (ID 4)
+Resolved Faculty ID: 2
+Found 0 swap requests.
+GET /swap-requests: User=Teacher One (ID 4)
+Resolved Faculty ID: 2
+Found 0 swap requests.
+GET /swap-requests: User=Teacher One (ID 4)
+Resolved Faculty ID: 2
+Found 0 swap requests.
+GET /swap-requests: User=Teacher One (ID 4)
+Resolved Faculty ID: 2
+Found 0 swap requests.
+GET /swap-requests: User=Teacher One (ID 4)
+Resolved Faculty ID: 2
+Found 0 swap requests.
+GET /swap-requests: User=Teacher One (ID 4)
+Resolved Faculty ID: 2
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 3
+Found 0 swap requests.

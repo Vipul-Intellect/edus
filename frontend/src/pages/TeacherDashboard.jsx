@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import ApiService from "../services/api";
 import NotificationCenter from "../components/NotificationCenter";
 import GoogleCalendarConnect from "../components/GoogleCalendarConnect";
@@ -26,9 +26,13 @@ import {
   AlertTriangle,
 
   User,
-  List
+  List,
+  Video,
+  Radio,
+  ExternalLink
 } from "lucide-react";
 import MyRequestsModal from "./Teachers/MyRequestsModal";
+import MyMeetingsModal from "../components/Dashboard/MyMeetingsModal";
 
 const ProfileModal = ({ isOpen, onClose, teacher }) => {
   if (!isOpen) return null;
@@ -76,6 +80,7 @@ const ProfileModal = ({ isOpen, onClose, teacher }) => {
 
 export default function TeacherDashboard({ onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [stats, setStats] = useState({
     totalClasses: 0,
     todayClasses: 0,
@@ -84,6 +89,7 @@ export default function TeacherDashboard({ onLogout }) {
   });
   const [timetable, setTimetable] = useState([]);
   const [roomStatus, setRoomStatus] = useState([]);
+  const [meetings, setMeetings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [teacherInfo, setTeacherInfo] = useState({
@@ -93,9 +99,46 @@ export default function TeacherDashboard({ onLogout }) {
     employeeId: ""
   });
 
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showMyRequestsModal, setShowMyRequestsModal] = useState(false);
+  const [showCreateMeetingModal, setShowCreateMeetingModal] = useState(false);
+  const [showMyMeetingsModal, setShowMyMeetingsModal] = useState(false);
+
   useEffect(() => {
     loadTeacherData();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (location.hash === "#swap") {
+        setShowSwapModal(true);
+      } else if (location.hash === "#leave") {
+        setShowLeaveModal(true);
+      } else if (location.hash === "#profile") {
+        setShowProfileModal(true);
+      } else if (location.hash === "#requests") {
+        setShowMyRequestsModal(true);
+      } else if (location.hash === "#meetings") {
+        setShowMyMeetingsModal(true);
+      } else if (location.hash === "#schedule") {
+        const el = document.getElementById("schedule");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (location.hash === "#calendar") {
+        const el = document.getElementById("calendar");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (location.hash === "#rooms") {
+        const el = document.getElementById("rooms");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        setShowSwapModal(false);
+        setShowLeaveModal(false);
+        setShowProfileModal(false);
+        setShowMyRequestsModal(false);
+      }
+    }
+  }, [location.hash, isLoading]);
 
   const processRoomData = (response) => {
     if (response && typeof response === 'object') {
@@ -152,6 +195,14 @@ export default function TeacherDashboard({ onLogout }) {
         swapRequests = [];
       }
 
+      // Load meetings
+      let meetingsData = [];
+      try {
+        const meets = await ApiService.getMeetings();
+        meetingsData = meets?.meetings || [];
+      } catch (err) { }
+      setMeetings(meetingsData);
+
       // Process stats
       const todayClasses = getTodayClasses(timetableResponse);
       const pendingSwaps = swapRequests ? swapRequests.filter(req => req.status === 'pending').length : 0;
@@ -205,11 +256,6 @@ export default function TeacherDashboard({ onLogout }) {
   const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const todayClasses = getTodayClasses(timetable);
 
-  const [showSwapModal, setShowSwapModal] = useState(false);
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showMyRequestsModal, setShowMyRequestsModal] = useState(false);
-
   const handleSubmitSwap = async (data) => {
     try {
       await ApiService.createSwapRequest(data);
@@ -233,7 +279,7 @@ export default function TeacherDashboard({ onLogout }) {
 
   if (error) {
     return (
-      <div className="min-h-screen p-6 bg-gradient-to-br from-green-50 via-white to-emerald-50">
+      <div className="flex-1 p-6 bg-transparent">
         <div className="max-w-7xl mx-auto">
           <Card className="shadow-lg">
             <CardContent className="p-8 text-center">
@@ -252,46 +298,22 @@ export default function TeacherDashboard({ onLogout }) {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-green-50 via-white to-emerald-50">
+    <div className="flex-1 p-6 bg-transparent">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <h1 className="text-4xl font-bold text-slate-900 mb-2">
-              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}, {teacherInfo.name}!
+              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}, <span className="text-green-600">{teacherInfo.name.split(' ')[0]}!</span>
             </h1>
             <p className="text-lg text-slate-600">{currentDay} • {currentTime}</p>
             <div className="flex gap-2 mt-2">
-              <Badge variant="secondary">{teacherInfo.department}</Badge>
-              <Badge variant="secondary">ID: {teacherInfo.employeeId}</Badge>
+              <Badge variant="secondary" className="bg-green-50 text-green-700 hover:bg-green-100">{teacherInfo.department}</Badge>
+              <Badge variant="secondary" className="bg-green-50 text-green-700 hover:bg-green-100">ID: {teacherInfo.employeeId}</Badge>
             </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => setShowSwapModal(true)}>
-              <ArrowRightLeft className="w-4 h-4" />
-              Swap Classes
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={() => setShowLeaveModal(true)}>
-              <FileText className="w-4 h-4" />
-              Apply Leave
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={() => setShowMyRequestsModal(true)}>
-              <List className="w-4 h-4" />
-              My Requests
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={() => navigate('/timetable')}>
-              <Calendar className="w-4 h-4" />
-              Full Schedule
-            </Button>
-            <NotificationCenter />
-            <Button variant="ghost" size="sm">
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={onLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
+          {/* Action buttons removed since they are now in the sidebar */}
+          <div className="flex flex-wrap gap-3 hidden md:flex opacity-0 pointer-events-none"></div>
         </div>
 
         {/* Stats Grid */}
@@ -324,30 +346,44 @@ export default function TeacherDashboard({ onLogout }) {
             color="purple"
             isLoading={isLoading}
           />
+          <div
+            className="cursor-pointer"
+            onClick={() => setShowMyMeetingsModal(true)}
+            title="View my meetings"
+          >
+            <StatCard
+              title="My Meetings"
+              value={meetings.length}
+              icon={Video}
+              color="indigo"
+              isLoading={isLoading}
+            />
+          </div>
         </div>
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Today's Schedule */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2" id="schedule">
             <TodaySchedule
               classes={todayClasses}
               isLoading={isLoading}
             />
           </div>
 
-          {/* Quick Actions */}
-          <div className="space-y-4">
-            <QuickActions
-              onSwapClick={() => setShowSwapModal(true)}
-              onLeaveClick={() => setShowLeaveModal(true)}
-              onProfileClick={() => setShowProfileModal(true)}
+          {/* Right Column */}
+          <div className="space-y-4" id="calendar">
+            <CreateMeetingCard
+              onCreateClick={() => setShowCreateMeetingModal(true)}
             />
+            {meetings.length > 0 && (
+              <ActiveMeetingsCard meetings={meetings} />
+            )}
             <GoogleCalendarConnect />
           </div>
 
           {/* Room Status */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2" id="rooms">
             <RoomStatusCard
               rooms={roomStatus}
               onStatusChange={handleRoomStatusChange}
@@ -388,6 +424,21 @@ export default function TeacherDashboard({ onLogout }) {
         isOpen={showMyRequestsModal}
         onClose={() => setShowMyRequestsModal(false)}
       />
+
+      <CreateMeetingModal
+        isOpen={showCreateMeetingModal}
+        onClose={() => setShowCreateMeetingModal(false)}
+        teacherInfo={teacherInfo}
+      />
+
+      <MyMeetingsModal
+        isOpen={showMyMeetingsModal}
+        onClose={() => {
+          setShowMyMeetingsModal(false);
+          if (location.hash === "#meetings") navigate('/teacher');
+        }}
+        meetings={meetings}
+      />
     </div>
   );
 }
@@ -398,7 +449,8 @@ function StatCard({ title, value, icon: Icon, color, isLoading }) {
     green: "bg-green-100 text-green-800",
     blue: "bg-blue-100 text-blue-800",
     orange: "bg-orange-100 text-orange-800",
-    purple: "bg-purple-100 text-purple-800"
+    purple: "bg-purple-100 text-purple-800",
+    indigo: "bg-indigo-100 text-indigo-800"
   };
 
   if (isLoading) {
@@ -872,5 +924,362 @@ function WeeklyOverview({ timetable, isLoading }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Create Meeting Card
+function CreateMeetingCard({ onCreateClick }) {
+  return (
+    <Card className="shadow-lg bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-100">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-indigo-800">
+          <Video className="w-5 h-5" />
+          On-Demand Broadcast
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-indigo-600 mb-4">
+          Instantly create a meeting and broadcast it to your students or colleagues.
+        </p>
+        <Button 
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
+          onClick={onCreateClick}
+        >
+          <Radio className="w-4 h-4 animate-pulse" />
+          Create Broadcast
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Create Meeting Modal
+function CreateMeetingModal({ isOpen, onClose, teacherInfo }) {
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    audience_role: "students",
+    dept_id: teacherInfo?.dept_id || "",
+    year: "",
+    section_id: "",
+    start_time: "",
+    manual_link: "",
+    is_instant: true
+  });
+  const [loading, setLoading] = useState(false);
+  const [sections, setSections] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+
+  // Load metadata when opened
+  useEffect(() => {
+    if (isOpen) {
+      // Set default time to now
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      setFormData(prev => ({ 
+        ...prev, 
+        start_time: now.toISOString().slice(0, 16),
+        dept_id: teacherInfo?.dept_id || ""
+      }));
+
+      const fetchData = async () => {
+        try {
+          const [sectionsRes, deptsRes, statusRes] = await Promise.all([
+            ApiService.getSections(),
+            ApiService.getDepartments(),
+            ApiService.getCalendarStatus()
+          ]);
+          
+          if (sectionsRes && sectionsRes.sections) setSections(sectionsRes.sections);
+          if (deptsRes && deptsRes.departments) setDepartments(deptsRes.departments);
+          if (statusRes && statusRes.is_connected) setIsGoogleConnected(true);
+        } catch (err) {
+          console.error("Failed to load metadata", err);
+        }
+      };
+      fetchData();
+    }
+  }, [isOpen, teacherInfo]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      let finalStartTime = formData.start_time;
+      if (formData.is_instant) {
+        finalStartTime = new Date().toISOString();
+      } else {
+        // Assume local input timezone, convert to UTC string for backend
+        finalStartTime = new Date(formData.start_time).toISOString();
+      }
+
+      await ApiService.createMeeting({
+        title: formData.title,
+        description: formData.description,
+        audience_role: formData.audience_role,
+        dept_id: formData.dept_id || null,
+        year: formData.year || null,
+        section_id: formData.section_id || null,
+        start_time: finalStartTime,
+        manual_link: formData.manual_link || null
+      });
+
+      alert("Meeting Broadcast Created Successfully!");
+      onClose();
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        audience_type: "section",
+        section_id: "",
+        start_time: "",
+        manual_link: "",
+        is_instant: true
+      });
+    } catch (error) {
+      alert("Failed to create meeting: " + (error.message || "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-indigo-800">
+          <Video className="w-6 h-6" /> Create Meeting Broadcast
+        </h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Meeting Title <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              className="w-full border rounded p-2"
+              placeholder="e.g. Extra Class - Revisions"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Description (Optional)</label>
+            <textarea
+              className="w-full border rounded p-2"
+              rows="2"
+              placeholder="Brief agenda..."
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+          
+          <div className="p-3 bg-gray-50 border rounded-lg space-y-3">
+            <h4 className="font-medium text-sm text-gray-700">Timing</h4>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  checked={formData.is_instant}
+                  onChange={() => setFormData({ ...formData, is_instant: true })}
+                />
+                <span className="font-bold text-red-600">Start Now (Instant)</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  checked={!formData.is_instant}
+                  onChange={() => setFormData({ ...formData, is_instant: false })}
+                />
+                <span>Schedule for Later</span>
+              </label>
+            </div>
+            
+            {!formData.is_instant && (
+              <div>
+                <label className="block text-sm font-medium mb-1">Start Time <span className="text-red-500">*</span></label>
+                <input
+                  type="datetime-local"
+                  className="w-full border rounded p-2"
+                  value={formData.start_time}
+                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                  required={!formData.is_instant}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium mb-1">Target Audience <span className="text-red-500">*</span></label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'students', label: 'Students' },
+                { id: 'teachers', label: 'Teachers' },
+                { id: 'all', label: 'Everyone' },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, audience_role: opt.id, year: "", section_id: "" })}
+                  className={`py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
+                    formData.audience_role === opt.id
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Conditional Filters */}
+            <div className="space-y-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-in fade-in slide-in-from-top-1 duration-200">
+              {formData.audience_role !== 'all' && (
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1 uppercase tracking-wider">Department</label>
+                  <select
+                    className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    value={formData.dept_id}
+                    onChange={(e) => setFormData({ ...formData, dept_id: e.target.value })}
+                  >
+                    <option value="">{formData.audience_role === 'students' ? "Select Department..." : "All Departments"}</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.id}>{d.dept_name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {formData.audience_role === 'students' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-indigo-700 mb-1 uppercase tracking-wider">Year</label>
+                    <select
+                      className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                      value={formData.year}
+                      onChange={(e) => setFormData({ ...formData, year: e.target.value, section_id: "" })}
+                    >
+                      <option value="">All Years</option>
+                      {[1, 2, 3, 4].map(y => <option key={y} value={y}>Year {y}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-indigo-700 mb-1 uppercase tracking-wider">Section</label>
+                    <select
+                      className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                      value={formData.section_id}
+                      disabled={!formData.year}
+                      onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
+                    >
+                      <option value="">All Sections</option>
+                      {sections
+                        .filter(s => 
+                          (!formData.dept_id || s.dept_id == formData.dept_id) && 
+                          (s.year == formData.year)
+                        )
+                        .map(sec => (
+                          <option key={sec.id} value={sec.id}>{sec.name}</option>
+                        ))
+                      }
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 space-y-3">
+            <label className="block text-sm font-bold text-indigo-800 flex items-center gap-2">
+              <Video className="w-4 h-4" /> Meeting Link
+            </label>
+            
+            {isGoogleConnected ? (
+              <div className="text-[11px] text-green-700 bg-green-50 p-2 rounded border border-green-100 flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Google Connected: Meet link will be auto-generated.
+              </div>
+            ) : (
+              <div className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded border border-amber-100 flex items-center gap-2">
+                <AlertCircle className="w-3 h-3" />
+                Calendar not connected. Manual link required.
+              </div>
+            )}
+
+            <input
+              type="url"
+              className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+              placeholder={isGoogleConnected ? "Paste link here to override auto-generation" : "https://zoom.us/..."}
+              value={formData.manual_link}
+              onChange={(e) => setFormData({ ...formData, manual_link: e.target.value })}
+              required={!isGoogleConnected}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={loading} className="bg-indigo-600 hover:bg-indigo-700">
+              {loading ? "Creating..." : (formData.is_instant ? "Start Broadcast Now" : "Schedule Meeting")}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Active Meetings Card
+function ActiveMeetingsCard({ meetings }) {
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-indigo-100 overflow-hidden">
+      <div className="bg-indigo-50/50 px-4 py-3 flex items-center justify-between border-b gap-2 border-indigo-50">
+        <h3 className="font-semibold text-indigo-900 flex items-center gap-2 text-sm">
+          <Video className="w-4 h-4 text-indigo-600 animate-pulse" />
+          Active Broadcasts
+        </h3>
+        <span className="text-xs font-medium text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">{meetings.length}</span>
+      </div>
+      <div className="p-3">
+        <div className="space-y-2">
+          {meetings.map((meet) => {
+            const startDate = new Date(meet.start_time);
+            const isLive = startDate <= new Date();
+
+            return (
+              <div key={meet.id} className="p-3 rounded-lg border border-gray-100 bg-gray-50/50 hover:bg-indigo-50/30 transition-colors">
+                <div className="flex justify-between items-start gap-2 mb-1">
+                  <h4 className="font-semibold text-sm text-gray-900 truncate">{meet.title}</h4>
+                  {isLive ? (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600 flex-shrink-0 flex items-center gap-1">
+                      <Radio className="w-2.5 h-2.5 animate-pulse" /> LIVE
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 flex-shrink-0">
+                      UPCOMING
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100/60">
+                  <div className="text-[10px] text-gray-500 font-medium truncate pr-2">
+                    By {meet.organizer_name}
+                  </div>
+                  {meet.meeting_link && (
+                    <a
+                      href={meet.meeting_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded transition-colors flex-shrink-0"
+                    >
+                      Join <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }

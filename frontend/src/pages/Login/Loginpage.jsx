@@ -1,134 +1,110 @@
-// src/components/login/LoginPage.jsx
+// src/pages/Login/Loginpage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ApiService from '../../services/api'; // Import the complete API service
+import { GraduationCap } from 'lucide-react';
+import ApiService from '../../services/api';
 import './login.css';
 
+const QUICK_LOGINS = [
+  { role: 'admin',   label: 'Admin',   icon: '🛡️', username: 'admin',   password: 'Admin@123', cls: 'admin'   },
+  { role: 'teacher', label: 'Teacher', icon: '📚', username: 'teacher1', password: 'Teacher@123', cls: 'teacher' },
+  { role: 'student', label: 'Student', icon: '🎓', username: 'student1', password: 'Student@123', cls: 'student' },
+];
+
 const LoginPage = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('student');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showCredentials, setShowCredentials] = useState(true);
+  const [username, setUsername]     = useState('');
+  const [password, setPassword]     = useState('');
+  const [userType, setUserType]     = useState('student');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError]           = useState('');
+  const [isLoading, setIsLoading]   = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const doLogin = async (uname, pass, type) => {
     setIsLoading(true);
     setError('');
-
     try {
+      // Try admin endpoint first if toggle = admin, otherwise use standard login
       let response;
-
-      // Use different login endpoints based on user type
-      if (userType === 'admin') {
-        response = await ApiService.adminLogin(username, password);
+      if (type === 'admin') {
+        response = await ApiService.adminLogin(uname, pass);
+        // Fallback: if adminLogin fails, try regular login too
+        if (!response?.token) {
+          response = await ApiService.login(uname, pass);
+        }
       } else {
-        response = await ApiService.login(username, password);
+        response = await ApiService.login(uname, pass);
       }
 
-      // Check if login was successful
-      if (response && response.token) {
-        // Token and user data are automatically stored by ApiService
-        const { role, user_id, full_name, department } = response;
-
-        // Verify the role matches the selected user type
-        if (userType === 'admin' && role !== 'admin') {
-          setError('Invalid admin credentials. Please use admin login.');
-          ApiService.logout();
-          return;
-        }
-
-        if (userType === 'student' && role !== 'student') {
-          setError('Access denied. You are not registered as a student.');
-          ApiService.logout();
-          return;
-        }
-
-        if (userType === 'teacher' && role !== 'teacher') {
-          setError('Access denied. You are not registered as a teacher.');
-          ApiService.logout();
-          return;
-        }
-
-        // Redirect user based on their role
+      if (response?.token) {
+        const { role } = response;
+        // Navigate based on actual server-returned role (not the toggle selection)
         switch (role) {
-          case 'admin':
-            navigate('/admin');
-            break;
-          case 'teacher':
-            navigate('/teacher');
-            break;
-          case 'student':
-            navigate('/student');
-            break;
-          default:
-            navigate('/');
+          case 'admin':   navigate('/admin');   break;
+          case 'teacher': navigate('/teacher'); break;
+          case 'student': navigate('/student'); break;
+          default:        navigate('/');
         }
       } else {
         setError(response?.error || 'Login failed. Please check your credentials.');
       }
-
     } catch (err) {
-      // Handle different types of errors
-      if (err.message.includes('Network error')) {
+      if (err.message?.includes('Network error') || err.message?.includes('fetch'))
         setError('Cannot connect to server. Please ensure the backend is running.');
-      } else if (err.message.includes('401')) {
+      else if (err.message?.includes('401') || err.message?.includes('Invalid'))
         setError('Invalid username or password.');
-      } else {
+      else
         setError(err.message || 'Login failed. Please try again.');
-      }
-      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Quick login function for testing
-  const quickLogin = (type) => {
-    const credentials = {
-      admin: { username: 'admin', password: 'password123', userType: 'admin' },
-      teacher: { username: 'teacher1', password: 'password123', userType: 'teacher' },
-      student: { username: 'student1', password: 'password123', userType: 'student' }
-    };
+  const handleLogin = (e) => {
+    e.preventDefault();
+    doLogin(username, password, userType);
+  };
 
-    const cred = credentials[type];
-    setUsername(cred.username);
-    setPassword(cred.password);
-    setUserType(cred.userType);
+  const handleQuickLogin = (ql) => {
+    setUserType(ql.role);
+    setUsername(ql.username);
+    setPassword(ql.password);
+    doLogin(ql.username, ql.password, ql.role);
   };
 
   return (
     <div className="login-container">
+      {/* Brand */}
+      <div className="login-brand">
+        <h1 className="brand-title">
+          <GraduationCap size={32} strokeWidth={2} />
+          EduScheduler
+        </h1>
+        <p className="brand-subtitle">Campus Automation Platform</p>
+      </div>
+
       <div className="login-card">
         <div className="login-header">
-          <div className="logo">
-            <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="50" height="50" rx="10" fill="#3498db" />
-              <path d="M15 20H35M15 25H35M15 30H25M30 30H35" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </div>
-          <h1 className="login-title">EduScheduler</h1>
-          <p className="login-subtitle">Sign in to access your dashboard</p>
+          <h1 className="login-title">Welcome back 👋</h1>
+          <p className="login-subtitle">Sign in to your account to continue</p>
+        </div>
+
+        {/* Role selector */}
+        <div className="role-toggle-container">
+          {['student', 'teacher', 'admin'].map((role) => (
+            <button
+              key={role}
+              type="button"
+              className={`role-toggle-btn ${userType === role ? 'active' : ''}`}
+              onClick={() => setUserType(role)}
+            >
+              {role === 'student' ? '🎓' : role === 'teacher' ? '📚' : '🛡️'}
+              {role.charAt(0).toUpperCase() + role.slice(1)}
+            </button>
+          ))}
         </div>
 
         <form onSubmit={handleLogin} className="login-form">
-          <div className="input-group">
-            <label htmlFor="userType">I am a</label>
-            <select
-              id="userType"
-              value={userType}
-              onChange={(e) => setUserType(e.target.value)}
-              className="user-type-select"
-              disabled={isLoading}
-            >
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-              <option value="admin">Administrator</option>
-            </select>
-          </div>
-
           <div className="input-group">
             <label htmlFor="username">Username</label>
             <input
@@ -159,6 +135,25 @@ const LoginPage = () => {
             />
           </div>
 
+          {/* Remember me + Forgot */}
+          <div className="form-footer">
+            <label className="remember-me">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              Remember me
+            </label>
+            <a
+              href="#"
+              className="forgot-link"
+              onClick={(e) => { e.preventDefault(); alert('Please contact your IT administrator to reset your password.'); }}
+            >
+              Forgot password?
+            </a>
+          </div>
+
           {error && (
             <div className="error-message">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -168,77 +163,31 @@ const LoginPage = () => {
             </div>
           )}
 
-          <button
-            type="submit"
-            className="login-button"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <span className="spinner"></span>
-                Signing in...
-              </>
-            ) : (
-              'Sign In'
-            )}
+          <button type="submit" className="login-button" disabled={isLoading}>
+            {isLoading ? <span className="spinner" /> : null}
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        {showCredentials && (
-          <div className="credentials-section">
-            <div className="credentials-header">
-              <span>Test Credentials</span>
+        {/* Quick login */}
+        <div className="divider"><span>Quick Login</span></div>
+        <div className="quick-login-section">
+          <p className="quick-login-label">For testing — one click login</p>
+          <div className="quick-login-buttons">
+            {QUICK_LOGINS.map((ql) => (
               <button
-                className="toggle-credentials"
-                onClick={() => setShowCredentials(false)}
+                key={ql.role}
                 type="button"
-              >
-                ×
-              </button>
-            </div>
-            <div className="quick-login-buttons">
-              <button
-                type="button"
-                className="quick-login-btn admin"
-                onClick={() => quickLogin('admin')}
+                className={`quick-btn ${ql.cls}`}
+                onClick={() => handleQuickLogin(ql)}
                 disabled={isLoading}
               >
-                <span className="role-icon">👤</span>
-                <div>
-                  <div className="role-name">Admin</div>
-                  <div className="role-cred">admin / password123</div>
-                </div>
+                <span className="quick-btn-icon">{ql.icon}</span>
+                {ql.label}
+                <span className="quick-btn-creds">{ql.username}</span>
               </button>
-              <button
-                type="button"
-                className="quick-login-btn teacher"
-                onClick={() => quickLogin('teacher')}
-                disabled={isLoading}
-              >
-                <span className="role-icon">👨‍🏫</span>
-                <div>
-                  <div className="role-name">Teacher</div>
-                  <div className="role-cred">teacher1 / password123</div>
-                </div>
-              </button>
-              <button
-                type="button"
-                className="quick-login-btn student"
-                onClick={() => quickLogin('student')}
-                disabled={isLoading}
-              >
-                <span className="role-icon">👨‍🎓</span>
-                <div>
-                  <div className="role-name">Student</div>
-                  <div className="role-cred">student1 / password123</div>
-                </div>
-              </button>
-            </div>
+            ))}
           </div>
-        )}
-
-        <div className="login-footer">
-          <p>© 2026 EduScheduler</p>
         </div>
       </div>
     </div>

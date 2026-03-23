@@ -102,7 +102,7 @@ export default function Sections() {
                                     className="border border-gray-300 rounded-lg px-3 py-2 bg-white"
                                 >
                                     <option value="all">All Departments</option>
-                                    {departments.map(dept => (
+                                    {(Array.isArray(departments) ? departments : []).map(dept => (
                                         <option key={dept.id} value={dept.id}>{dept.dept_name}</option>
                                     ))}
                                 </select>
@@ -153,7 +153,7 @@ export default function Sections() {
                             </p>
                         </div>
                     ) : (
-                        filteredSections.map((section) => (
+                        (Array.isArray(filteredSections) ? filteredSections : []).map((section) => (
                             <SectionCard
                                 key={section.id}
                                 section={section}

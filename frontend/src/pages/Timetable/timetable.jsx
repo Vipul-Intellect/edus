@@ -34,10 +34,16 @@ export default function Timetable() {
         api.getDepartments(),
         api.getSections()
       ]);
-      setDepartments(deptsData);
-      setSections(sectionsData);
+
+      const deptList = Array.isArray(deptsData) ? deptsData : (deptsData?.departments || deptsData?.data || []);
+      const sectionList = Array.isArray(sectionsData) ? sectionsData : (sectionsData?.sections || sectionsData?.data || []);
+
+      setDepartments(deptList);
+      setSections(sectionList);
     } catch (error) {
       console.error('Error loading metadata:', error);
+      setDepartments([]);
+      setSections([]);
     }
   };
 
@@ -98,8 +104,8 @@ export default function Timetable() {
   };
 
   const filteredDepartments = filterDept === "all"
-    ? departments
-    : departments.filter(d => d.dept_name === filterDept);
+    ? (Array.isArray(departments) ? departments : [])
+    : (Array.isArray(departments) ? departments : []).filter(d => d.dept_name === filterDept);
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -145,7 +151,7 @@ export default function Timetable() {
                 className="border border-gray-300 rounded-lg px-4 py-2 bg-white"
               >
                 <option value="all">All Departments</option>
-                {departments.map(dept => (
+                {(Array.isArray(departments) ? departments : []).map(dept => (
                   <option key={dept.id} value={dept.dept_name}>{dept.dept_name}</option>
                 ))}
               </select>
@@ -169,7 +175,7 @@ export default function Timetable() {
                 className="border border-gray-300 rounded-lg px-4 py-2 bg-white"
               >
                 <option value="all">All Sections</option>
-                {sections
+                {(Array.isArray(sections) ? sections : [])
                   .filter(s =>
                     (filterDept === "all" || s.dept_name === filterDept) &&
                     (filterYear === "all" || s.year === parseInt(filterYear))
@@ -217,7 +223,7 @@ export default function Timetable() {
                 <thead>
                   <tr className="bg-gradient-to-r from-blue-50 to-indigo-50">
                     <th className="border border-gray-300 p-3 text-left font-semibold">Time</th>
-                    {DAYS.map(day => (
+                    {(Array.isArray(DAYS) ? DAYS : []).map(day => (
                       <th key={day} className="border border-gray-300 p-3 text-center font-semibold">
                         {day}
                       </th>
@@ -225,12 +231,12 @@ export default function Timetable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {TIMES.map(time => (
+                  {(Array.isArray(TIMES) ? TIMES : []).map(time => (
                     <tr key={time} className="hover:bg-gray-50">
                       <td className="border border-gray-300 p-3 font-medium text-gray-700 bg-gray-50">
                         {time}
                       </td>
-                      {DAYS.map(day => {
+                      {(Array.isArray(DAYS) ? DAYS : []).map(day => {
                         const classEntry = getClassForSlot(day, time);
                         return (
                           <td key={`${day}-${time}`} className="border border-gray-300 p-2">
@@ -273,19 +279,19 @@ export default function Timetable() {
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-indigo-600">
-                    {new Set(timetable.map(t => t.course)).size}
+                    {new Set((Array.isArray(timetable) ? timetable : []).map(t => t.course)).size}
                   </div>
                   <div className="text-sm text-gray-600">Unique Courses</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-purple-600">
-                    {new Set(timetable.map(t => t.faculty)).size}
+                    {new Set((Array.isArray(timetable) ? timetable : []).map(t => t.faculty)).size}
                   </div>
                   <div className="text-sm text-gray-600">Faculty Members</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-pink-600">
-                    {new Set(timetable.map(t => t.room)).size}
+                    {new Set((Array.isArray(timetable) ? timetable : []).map(t => t.room)).size}
                   </div>
                   <div className="text-sm text-gray-600">Rooms Used</div>
                 </div>

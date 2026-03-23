@@ -196,7 +196,9 @@ function AppRoutes() {
         path="/teacher"
         element={
           isAuthenticated && userRole === 'teacher' ?
-            <TeacherDashboard onLogout={handleLogout} /> : // TeacherDashboard handles its own layout probably? Check later or assume standard
+            <Layout onLogout={handleLogout} role={userRole}>
+              <TeacherDashboard onLogout={handleLogout} />
+            </Layout> :
             <Navigate to="/login" replace />
         }
       />
@@ -204,7 +206,9 @@ function AppRoutes() {
         path="/teacher/mark-attendance"
         element={
           isAuthenticated && userRole === 'teacher' ?
-            <MarkAttendance /> :
+            <Layout onLogout={handleLogout} role={userRole}>
+              <MarkAttendance />
+            </Layout> :
             <Navigate to="/login" replace />
         }
       />
@@ -228,7 +232,9 @@ function AppRoutes() {
         path="/student"
         element={
           isAuthenticated && userRole === 'student' ?
-            <StudentDashboard onLogout={handleLogout} /> :
+            <Layout onLogout={handleLogout} role={userRole}>
+              <StudentDashboard onLogout={handleLogout} />
+            </Layout> :
             <Navigate to="/login" replace />
         }
       />
@@ -236,7 +242,9 @@ function AppRoutes() {
         path="/student/attendance"
         element={
           isAuthenticated && userRole === 'student' ?
-            <StudentAttendance /> :
+            <Layout onLogout={handleLogout} role={userRole}>
+              <StudentAttendance />
+            </Layout> :
             <Navigate to="/login" replace />
         }
       />
@@ -244,7 +252,9 @@ function AppRoutes() {
         path="/student/*"
         element={
           isAuthenticated && userRole === 'student' ?
-            <StudentDashboard onLogout={handleLogout} /> :
+            <Layout onLogout={handleLogout} role={userRole}>
+              <StudentDashboard onLogout={handleLogout} />
+            </Layout> :
             <Navigate to="/login" replace />
         }
       />

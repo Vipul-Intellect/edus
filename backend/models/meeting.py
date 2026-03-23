@@ -20,6 +20,14 @@ class Meeting(db.Model):
     # Location and type
     location = db.Column(db.String(100), nullable=True)
     meeting_type = db.Column(db.String(50), default="other")  # department/research/admin/other
+    meeting_link = db.Column(db.String(500), nullable=True)
+    
+    # Broadcast / Audience details
+    audience_role = db.Column(db.String(20), nullable=False, default="all")  # all/teachers/students
+    dept_id = db.Column(db.Integer, db.ForeignKey("departments.id"), nullable=True)
+    year = db.Column(db.Integer, nullable=True)  # For student targeting
+    section_id = db.Column(db.Integer, db.ForeignKey("sections.id"), nullable=True)
+    created_by_role = db.Column(db.String(20), nullable=True)
     
     # Status
     status = db.Column(db.String(20), default="scheduled")  # scheduled/completed/cancelled

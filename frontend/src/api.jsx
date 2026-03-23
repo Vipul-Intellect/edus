@@ -1,5 +1,6 @@
 // src/api.jsx
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = API_URL;
 
 class ApiService {
   constructor() {
@@ -14,7 +15,7 @@ class ApiService {
   // Helper method to make authenticated requests
   async makeRequest(url, options = {}) {
     this.updateToken();
-    
+
     const headers = {
       ...options.headers
     };
@@ -68,13 +69,13 @@ class ApiService {
   }
 
   // ==================== AUTHENTICATION ====================
-  
+
   async login(username, password) {
     const response = await this.makeRequest('/login', {
       method: 'POST',
       body: JSON.stringify({ username, password })
     });
-    
+
     if (response && response.token) {
       localStorage.setItem('token', response.token);
       localStorage.setItem('role', response.role);
@@ -83,7 +84,7 @@ class ApiService {
       localStorage.setItem('department', response.department || '');
       this.token = response.token;
     }
-    
+
     return response;
   }
 
@@ -92,14 +93,14 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ username, password })
     });
-    
+
     if (response && response.token) {
       localStorage.setItem('token', response.token);
       localStorage.setItem('role', response.role);
       localStorage.setItem('user_id', response.user_id);
       this.token = response.token;
     }
-    
+
     return response;
   }
 
@@ -138,7 +139,7 @@ class ApiService {
   }
 
   // ==================== ADMIN - DEPARTMENTS ====================
-  
+
   async getDepartments() {
     return this.makeRequest('/admin/departments');
   }
@@ -151,7 +152,7 @@ class ApiService {
   }
 
   // ==================== ADMIN - FACULTY ====================
-  
+
   async getFaculty() {
     return this.makeRequest('/admin/faculty');
   }
@@ -182,7 +183,7 @@ class ApiService {
   }
 
   // ==================== ADMIN - COURSES ====================
-  
+
   async getCourses() {
     return this.makeRequest('/admin/courses');
   }
@@ -208,7 +209,7 @@ class ApiService {
   }
 
   // ==================== ADMIN - ROOMS ====================
-  
+
   async getRooms() {
     return this.makeRequest('/admin/rooms');
   }
@@ -234,18 +235,18 @@ class ApiService {
   }
 
   // ==================== ADMIN - SECTIONS ====================
-  
+
   async getSections(deptName = null, year = null) {
     let url = '/admin/sections';
     const params = new URLSearchParams();
-    
+
     if (deptName) params.append('dept_name', deptName);
     if (year) params.append('year', year);
-    
+
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-    
+
     return this.makeRequest(url);
   }
 
@@ -270,7 +271,7 @@ class ApiService {
   }
 
   // ==================== ADMIN - STUDENTS ====================
-  
+
   async getStudents() {
     return this.makeRequest('/admin/students');
   }
@@ -307,18 +308,18 @@ class ApiService {
   }
 
   // ==================== ADMIN - COURSE ALLOCATIONS ====================
-  
+
   async getCourseAllocations(deptName = null, year = null) {
     let url = '/admin/allocations';
     const params = new URLSearchParams();
-    
+
     if (deptName) params.append('dept_name', deptName);
     if (year) params.append('year', year);
-    
+
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-    
+
     return this.makeRequest(url);
   }
 
@@ -330,7 +331,7 @@ class ApiService {
   }
 
   // ==================== ADMIN - TIMETABLE ====================
-  
+
   async generateTimetable() {
     return this.makeRequest('/admin/generate_timetable', {
       method: 'POST'
@@ -338,7 +339,7 @@ class ApiService {
   }
 
   // ==================== ADMIN - SWAP REQUESTS ====================
-  
+
   async getAdminSwapRequests(status = 'pending') {
     return this.makeRequest(`/admin/swap-requests?status=${status}`);
   }
@@ -357,7 +358,7 @@ class ApiService {
   }
 
   // ==================== ADMIN - LEAVE REQUESTS ====================
-  
+
   async getAdminLeaveRequests(status = 'pending', department = null, leaveType = null) {
     let url = `/admin/leave-requests?status=${status}`;
     if (department) url += `&department=${department}`;
@@ -395,7 +396,7 @@ class ApiService {
   }
 
   // ==================== TEACHER - ROOM OCCUPANCY ====================
-  
+
   async markRoom(roomId, status, notes = '') {
     return this.makeRequest('/teacher/mark_room', {
       method: 'POST',
@@ -408,13 +409,13 @@ class ApiService {
   }
 
   // ==================== TEACHER - TIMETABLE ====================
-  
+
   async getTeacherTimetable() {
     return this.makeRequest('/teacher/timetable');
   }
 
   // ==================== TEACHER - SWAP REQUESTS ====================
-  
+
   async getTeacherSwapRequests() {
     return this.makeRequest('/teacher/swap-requests');
   }
@@ -427,13 +428,13 @@ class ApiService {
   }
 
   // ==================== STUDENT - TIMETABLE ====================
-  
+
   async getStudentTimetable() {
     return this.makeRequest('/student/timetable');
   }
 
   // ==================== LEAVE REQUESTS (All Users) ====================
-  
+
   async submitLeaveRequest(leaveData) {
     return this.makeRequest('/leave/request', {
       method: 'POST',
@@ -465,22 +466,22 @@ class ApiService {
   }
 
   // ==================== GENERAL - TIMETABLE ====================
-  
+
   async getTimetable(filters = {}) {
     const params = new URLSearchParams();
-    
+
     Object.keys(filters).forEach(key => {
       if (filters[key]) {
         params.append(key, filters[key]);
       }
     });
-    
+
     const queryString = params.toString();
     return this.makeRequest(`/get_timetable${queryString ? `?${queryString}` : ''}`);
   }
 
   // ==================== CSV OPERATIONS ====================
-  
+
   async generateCSVs() {
     return this.makeRequest('/generate_csvs', {
       method: 'POST'
@@ -490,7 +491,7 @@ class ApiService {
   async uploadDepartments(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return this.makeRequest('/upload/departments', {
       method: 'POST',
       body: formData,
@@ -501,7 +502,7 @@ class ApiService {
   async uploadFaculty(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return this.makeRequest('/upload/faculty', {
       method: 'POST',
       body: formData,
@@ -512,7 +513,7 @@ class ApiService {
   async uploadSections(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return this.makeRequest('/upload/sections', {
       method: 'POST',
       body: formData,
@@ -523,7 +524,7 @@ class ApiService {
   async uploadStudents(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return this.makeRequest('/upload/students', {
       method: 'POST',
       body: formData,
@@ -532,7 +533,7 @@ class ApiService {
   }
 
   // ==================== CHATBOT / AI ASSISTANT ====================
-  
+
   async sendChatMessage(message) {
     return this.makeRequest('/api/chatbot', {
       method: 'POST',
@@ -551,7 +552,7 @@ class ApiService {
   }
 
   // ==================== ANNOUNCEMENTS ====================
-  
+
   async getAnnouncements() {
     return this.makeRequest('/api/announcements');
   }
@@ -564,7 +565,7 @@ class ApiService {
   }
 
   // ==================== LEGACY/GENERAL ENDPOINTS ====================
-  
+
   // General Department endpoints (non-admin)
   async getDepartmentsPublic() {
     return this.makeRequest('/get_departments');
@@ -593,14 +594,14 @@ class ApiService {
   async getCoursesPublic(deptName = null, year = null) {
     let url = '/get_courses';
     const params = new URLSearchParams();
-    
+
     if (deptName) params.append('dept_name', deptName);
     if (year) params.append('year', year);
-    
+
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-    
+
     return this.makeRequest(url);
   }
 
@@ -627,14 +628,14 @@ class ApiService {
   async getSectionsPublic(deptName = null, year = null) {
     let url = '/get_sections';
     const params = new URLSearchParams();
-    
+
     if (deptName) params.append('dept_name', deptName);
     if (year) params.append('year', year);
-    
+
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-    
+
     return this.makeRequest(url);
   }
 
@@ -649,14 +650,14 @@ class ApiService {
   async getCourseAllocationsPublic(deptName = null, year = null) {
     let url = '/get_course_allocations';
     const params = new URLSearchParams();
-    
+
     if (deptName) params.append('dept_name', deptName);
     if (year) params.append('year', year);
-    
+
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-    
+
     return this.makeRequest(url);
   }
 
@@ -675,7 +676,7 @@ class ApiService {
   }
 
   // ==================== TIME SLOTS (for your existing data) ====================
-  
+
   async getTimeSlots() {
     // This returns the standard time slots used by the backend
     return [
@@ -687,13 +688,13 @@ class ApiService {
   }
 
   // ==================== CLASSES/TIMETABLE MANAGEMENT ====================
-  
+
   // Get all classes (timetable entries)
   async getClasses(sortBy = "-created_date", limit = null) {
     const params = new URLSearchParams();
     if (sortBy) params.append('sort', sortBy);
     if (limit) params.append('limit', limit);
-    
+
     const queryString = params.toString();
     return this.makeRequest(`/get_timetable${queryString ? `?${queryString}` : ''}`);
   }
@@ -728,7 +729,7 @@ class ApiService {
   }
 
   // ==================== UTILITY METHODS ====================
-  
+
   // Get API base URL
   getBaseURL() {
     return API_BASE_URL;

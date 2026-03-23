@@ -1,9 +1,9 @@
 course,section,faculty,room,day,start_time,year,semester
-daa,A,yash,b-201,Wednesday,09:00,1,1
-daa,A,yash,b-201,Thursday,15:00,1,1
-daa,A,yash,b-201,Friday,11:00,1,1
-daa,A,yash,b-201,Friday,15:00,1,1
-daa,B,yash,b-201,Tuesday,11:00,1,1
-daa,B,yash,b-201,Wednesday,10:00,1,1
-daa,B,yash,b-201,Friday,13:00,1,1
+daa,A,yash,b-201,Monday,12:00,1,1
+daa,A,yash,b-201,Monday,13:00,1,1
+daa,A,yash,b-201,Monday,14:00,1,1
+daa,A,yash,b-201,Monday,15:00,1,1
+daa,B,yash,b-201,Monday,09:00,1,1
+daa,B,yash,b-201,Monday,10:00,1,1
+daa,B,yash,b-201,Monday,11:00,1,1
 daa,B,yash,b-201,Friday,17:00,1,1

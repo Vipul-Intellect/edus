@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Alert, AlertDescription } from '../components/ui/alert';
-import { API_URL } from '../api';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Alert, AlertDescription } from './ui/alert';
+import ApiService from '../services/api';
 
 const AssessmentManager = () => {
     const [assessments, setAssessments] = useState([]);
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [error, setError] = useState(null);
     const [formData, setFormData] = useState({
         course_id: '',
         title: '',
@@ -22,21 +23,27 @@ const AssessmentManager = () => {
     });
 
     useEffect(() => {
-        fetchAssessments();
-        fetchCourses();
+        fetchInitialData();
     }, []);
+
+    const fetchInitialData = async () => {
+        setLoading(true);
+        try {
+            await Promise.all([
+                fetchAssessments(),
+                fetchCourses()
+            ]);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchCourses = async () => {
         try {
-            const token = localStorage.getItem('token');
-            // Assuming you have an endpoint to get teacher's courses
-            const response = await fetch(`${API_URL}/teacher/courses`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setCourses(data);
-            }
+            const data = await ApiService.makeRequest('/admin/courses');
+            setCourses(Array.isArray(data) ? data : (data?.courses || []));
         } catch (err) {
             console.error('Error fetching courses:', err);
         }
@@ -44,19 +51,11 @@ const AssessmentManager = () => {
 
     const fetchAssessments = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/teacher/assessments`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch assessments');
-
-            const data = await response.json();
-            setAssessments(data);
+            const data = await ApiService.makeRequest('/api/performance/assessments');
+            setAssessments(Array.isArray(data) ? data : (data?.assessments || []));
         } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
+            console.error('Error fetching assessments:', err);
+            throw err;
         }
     };
 
@@ -64,13 +63,8 @@ const AssessmentManager = () => {
         e.preventDefault();
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/teacher/assessments`, {
+            const response = await ApiService.makeRequest('/api/performance/assessments', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify({
                     ...formData,
                     max_marks: parseFloat(formData.max_marks),
@@ -79,22 +73,22 @@ const AssessmentManager = () => {
                 })
             });
 
-            if (!response.ok) throw new Error('Failed to create assessment');
-
-            setFormData({
-                course_id: '',
-                title: '',
-                assessment_type: 'quiz',
-                max_marks: '',
-                weightage: '',
-                scheduled_date: '',
-                scheduled_time: '',
-                duration_minutes: '60',
-                location: ''
-            });
-            setShowCreateForm(false);
-            fetchAssessments();
-            alert('Assessment created successfully!');
+            if (response && !response.error) {
+                setFormData({
+                    course_id: '',
+                    title: '',
+                    assessment_type: 'quiz',
+                    max_marks: '',
+                    weightage: '',
+                    scheduled_date: '',
+                    scheduled_time: '',
+                    duration_minutes: '60',
+                    location: ''
+                });
+                setShowCreateForm(false);
+                fetchAssessments();
+                alert('Assessment created successfully!');
+            }
         } catch (err) {
             alert('Error: ' + err.message);
         }
@@ -104,16 +98,14 @@ const AssessmentManager = () => {
         if (!confirm('Delete this assessment? All grades will be removed.')) return;
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/teacher/assessments/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const response = await ApiService.makeRequest(`/api/performance/assessments/${id}`, {
+                method: 'DELETE'
             });
 
-            if (!response.ok) throw new Error('Failed to delete');
-
-            fetchAssessments();
-            alert('Assessment deleted successfully!');
+            if (response && !response.error) {
+                fetchAssessments();
+                alert('Assessment deleted successfully!');
+            }
         } catch (err) {
             alert('Error: ' + err.message);
         }
@@ -278,78 +270,73 @@ const AssessmentManager = () => {
             {upcomingAssessments.length > 0 && (
                 <div>
                     <h3 className="text-lg font-semibold mb-3">Upcoming Assessments</h3>
-                    <divclassName="grid gap-4">
-                    {upcomingAssessments.map(assessment => (
-                        <Card key={assessment.id} className="border-l-4 border-l-blue-500">
-                            <CardContent className="pt-6">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <h4 className="font-semibold text-lg">{assessment.title}</h4>
-                                            <span className={`px-2 py-1 rounded text-xs ${getTypeColor(assessment.assessment_type)}`}>
-                                                {assessment.assessment_type}
-                                            </span>
+                    <div className="grid gap-4">
+                        {upcomingAssessments.map(assessment => (
+                            <Card key={assessment.id} className="border-l-4 border-l-blue-500">
+                                <CardContent className="pt-6">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <h4 className="font-semibold text-lg">{assessment.title}</h4>
+                                                <span className={`px-2 py-1 rounded text-xs ${getTypeColor(assessment.assessment_type)}`}>
+                                                    {assessment.assessment_type}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mb-2">{assessment.course_name}</p>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                                                <div><span className="font-medium">📅 Date:</span> {new Date(assessment.scheduled_date).toLocaleDateString()}</div>
+                                                <div><span className="font-medium">⏰ Time:</span> {assessment.scheduled_time || 'TBD'}</div>
+                                                <div><span className="font-medium">📊 Marks:</span> {assessment.max_marks}</div>
+                                                <div><span className="font-medium">⏱️ Duration:</span> {assessment.duration_minutes} min</div>
+                                            </div>
+                                            {assessment.location && (
+                                                <div className="text-sm mt-2"><span className="font-medium">📍 Location:</span> {assessment.location}</div>
+                                            )}
                                         </div>
-                                        <p className="text-sm text-gray-600 mb-2">{assessment.course_name}</p>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                            <div><span className="font-medium">📅 Date:</span> {new Date(assessment.scheduled_date).toLocaleDateString()}</div>
-                                            <div><span className="font-medium">⏰ Time:</span> {assessment.scheduled_time || 'TBD'}</div>
-                                            <div><span className="font-medium">📊 Marks:</span> {assessment.max_marks}</div>
-                                            <div><span className="font-medium">⏱️ Duration:</span> {assessment.duration_minutes} min</div>
-                                        </div>
-                                        {assessment.location && (
-                                            <div className="text-sm mt-2"><span className="font-medium">📍 Location:</span> {assessment.location}</div>
-                                        )}
+                                        <Button variant="destructive" size="sm" onClick={() => handleDeleteAssessment(assessment.id)}>
+                                            Delete
+                                        </Button>
                                     </div>
-                                    <Button variant="destructive" size="sm" onClick={() => handleDeleteAssessment(assessment.id)}>
-                                        Delete
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
                 </div>
-        </div>
-    )
-}
+            )}
 
-{/* Past Assessments */ }
-{
-    pastAssessments.length > 0 && (
-        <div>
-            <h3 className="text-lg font-semibold mb-3">Past Assessments</h3>
-            <div className="grid gap-3">
-                {pastAssessments.map(assessment => (
-                    <Card key={assessment.id} className="opacity-75">
-                        <CardContent className="pt-4">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <span className="font-semibold">{assessment.title}</span>
-                                    <span className="text-sm text-gray-600 ml-2">({assessment.course_name})</span>
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                    {new Date(assessment.scheduled_date).toLocaleDateString()}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        </div>
-    )
-}
+            {/* Past Assessments */}
+            {pastAssessments.length > 0 && (
+                <div>
+                    <h3 className="text-lg font-semibold mb-3">Past Assessments</h3>
+                    <div className="grid gap-3">
+                        {pastAssessments.map(assessment => (
+                            <Card key={assessment.id} className="opacity-75">
+                                <CardContent className="pt-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <span className="font-semibold">{assessment.title}</span>
+                                            <span className="text-sm text-gray-600 ml-2">({assessment.course_name})</span>
+                                        </div>
+                                        <div className="text-sm text-gray-500">
+                                            {new Date(assessment.scheduled_date).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-{
-    assessments.length === 0 && (
-        <Card>
-            <CardContent className="py-12 text-center text-gray-500">
-                No assessments yet. Create one to get started!
-            </CardContent>
-        </Card>
-    )
-}
-    </div >
-  );
+            {assessments.length === 0 && (
+                <Card>
+                    <CardContent className="py-12 text-center text-gray-500">
+                        No assessments yet. Create one to get started!
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
 };
 
 export default AssessmentManager;

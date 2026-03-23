@@ -122,6 +122,7 @@ def get_auth_url(redirect_uri, login_hint=None):
     if not GOOGLE_LIBS_AVAILABLE:
         raise RuntimeError("Google libraries not installed on this server.")
     flow = Flow.from_client_config(_get_client_config(), scopes=SCOPES, redirect_uri=redirect_uri)
+    print(f"DEBUG: Generating Auth URL with redirect_uri: {redirect_uri}")
     url, _ = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='true',
@@ -138,9 +139,11 @@ def handle_auth_callback(code, redirect_uri, user):
     (Google omits refresh_token on reconnect unless prompt=consent was forced).
     """
     try:
+        print(f"DEBUG: Handling Auth Callback. Code: {code[:10]}... Redirect URI: {redirect_uri}")
         flow = Flow.from_client_config(_get_client_config(), scopes=SCOPES, redirect_uri=redirect_uri)
         flow.fetch_token(code=code)
         creds = flow.credentials
+        print("DEBUG: Token exchange SUCCESS")
 
         auth = UserGoogleAuth.query.filter_by(user_id=user.id).first()
         if not auth:
@@ -165,6 +168,7 @@ def handle_auth_callback(code, redirect_uri, user):
         return True
 
     except Exception as e:
+        print(f"!!! DEBUG: Auth callback failed: {e}")
         _safe_log(f"Auth callback failed: {e}", user_id=user.id)
         return False
 
@@ -263,10 +267,10 @@ def ensure_calendar_exists(user):
 def _get_timetable_entries_for_user(user):
     """Teacher → only their classes. Student → only their section."""
     if user.role == 'teacher':
-        faculty = Faculty.query.filter_by(user_id=user.id).first()
+        faculty = Faculty.query.filter_by(email=user.email).first()
         if not faculty:
             return []
-        return Timetable.query.filter_by(faculty_id=faculty.id).all()
+        return Timetable.query.filter_by(faculty_id=faculty.faculty_id).all()
     elif user.role == 'student':
         if not user.section_id:
             return []
@@ -280,10 +284,19 @@ def _get_timetable_entries_for_user(user):
 def _build_event_body(entry, calendar_id):
     """Build Google Calendar event dict from Timetable entry."""
     course_name = entry.course.name if entry.course else "Class"
-    room = entry.classroom.room_number if entry.classroom else "TBD"
+    room = entry.room.name if entry.room else "TBD"
     faculty_name = entry.faculty.faculty_name if entry.faculty else "Staff"
 
-    start_dt, end_dt = _next_occurrence_ist(entry.day, entry.start_time, entry.end_time)
+    # Timetable model has start_time but no end_time — assume 1-hour classes
+    start_time_str = entry.start_time or "09:00"
+    try:
+        start_h, start_m = map(int, start_time_str.split(":"))
+        end_h = start_h + 1
+        end_time_str = f"{end_h:02d}:{start_m:02d}"
+    except Exception:
+        end_time_str = "10:00"
+
+    start_dt, end_dt = _next_occurrence_ist(entry.day, start_time_str, end_time_str)
     rrule_day = DAY_TO_RRULE.get(entry.day, 'MO')
 
     return {
@@ -345,10 +358,12 @@ def sync_timetable(user, force=False):
 
     service = get_service(user)
     if not service:
+        print(f"!!! DEBUG: sync_timetable - get_service() returned None for user {user.id}")
         return False
 
     calendar_id = ensure_calendar_exists(user)
     if not calendar_id:
+        print(f"!!! DEBUG: sync_timetable - ensure_calendar_exists() returned None for user {user.id}")
         return False
 
     # ── Race condition guard: capture version before starting ──
@@ -425,6 +440,7 @@ def sync_timetable(user, force=False):
         return True
 
     except Exception as e:
+        print(f"!!! DEBUG: sync_timetable exception: {type(e).__name__}: {e}")
         auth.sync_status = 'failed'
         auth.last_error = str(e)[:500]  # Truncate to prevent log overflow
         db.session.commit()
@@ -535,3 +551,135 @@ def background_sync_all_users():
         sync_timetable(user, force=True)
 
     _safe_log("Background sync complete")
+
+
+# ─────────────────────────────────────────────
+# Google Meet Generation
+# ─────────────────────────────────────────────
+import uuid
+
+def create_google_event_with_meet(user, title, description, start_time_str):
+    """
+    Creates an event on the user's Google Calendar with a Google Meet link.
+    Requires user to have connected their Google Calendar via OAuth.
+    Returns the meeting link (hangoutLink) or None if not connected.
+    """
+    service = get_service(user)
+    if not service:
+        return None
+        
+    try:
+        # start_time_str should be ISO format. e.g. "2026-02-20T10:00:00"
+        start_dt = datetime.datetime.fromisoformat(start_time_str.replace("Z", "+00:00"))
+        
+        # Ensure it has timezone info
+        if start_dt.tzinfo is None:
+            if IST:
+                start_dt = IST.localize(start_dt)
+            else:
+                start_dt = start_dt.replace(tzinfo=datetime.timezone.utc)
+                
+        end_dt = start_dt + datetime.timedelta(hours=1)
+        
+        event_body = {
+            'summary': title,
+            'description': description,
+            'start': {'dateTime': start_dt.isoformat()},
+            'end': {'dateTime': end_dt.isoformat()},
+            'conferenceData': {
+                'createRequest': {
+                    'requestId': str(uuid.uuid4()),
+                    'conferenceSolutionKey': {'type': 'hangoutsMeet'}
+                }
+            }
+        }
+        
+        # Try finding their EduScheduler calendar
+        calendar_id = 'primary'
+        auth_record = UserGoogleAuth.query.filter_by(user_id=user.id).first()
+        if auth_record and auth_record.calendar_id:
+            try:
+                service.calendars().get(calendarId=auth_record.calendar_id).execute()
+                calendar_id = auth_record.calendar_id
+            except Exception:
+                pass
+                
+        created_event = service.events().insert(
+            calendarId=calendar_id, 
+            body=event_body,
+            conferenceDataVersion=1
+        ).execute()
+        
+        meet_link = created_event.get('hangoutLink')
+        _safe_log(f"Created Meet link {meet_link}", user_id=user.id)
+        return meet_link
+    except Exception as e:
+        _safe_log(f"Failed to create Google Meet link: {e}", user_id=user.id)
+        return None
+
+# ─────────────────────────────────────────────
+# Google Meet Generation
+# ─────────────────────────────────────────────
+import uuid
+
+def create_google_event_with_meet(user, title, description, start_time_str):
+    """
+    Creates an event on the user's primary calendar with a Google Meet link.
+    Requires user to have connected their Google Calendar via OAuth.
+    Returns the meeting link (hangoutLink) or None if not connected.
+    """
+    service = get_service(user)
+    if not service:
+        return None
+        
+    try:
+        # start_time_str could be ISO format: "2026-02-20T10:00:00"
+        # Let's parse it and default to 1 hour duration
+        start_dt = datetime.datetime.fromisoformat(start_time_str.replace("Z", "+00:00"))
+        
+        # Ensure it has timezone info
+        if start_dt.tzinfo is None:
+            if IST:
+                start_dt = IST.localize(start_dt)
+            else:
+                # Fallback
+                start_dt = start_dt.replace(tzinfo=datetime.timezone.utc)
+                
+        end_dt = start_dt + datetime.timedelta(hours=1)
+        
+        event_body = {
+            'summary': title,
+            'description': description,
+            'start': {'dateTime': start_dt.isoformat()},
+            'end': {'dateTime': end_dt.isoformat()},
+            'conferenceData': {
+                'createRequest': {
+                    'requestId': str(uuid.uuid4()),
+                    'conferenceSolutionKey': {'type': 'hangoutsMeet'}
+                }
+            }
+        }
+        
+        # Primary calendar is best for custom meetings, or we can use EduScheduler calendar
+        # Let's use the created one if available, otherwise primary
+        calendar_id = 'primary'
+        auth_record = UserGoogleAuth.query.filter_by(user_id=user.id).first()
+        if auth_record and auth_record.calendar_id:
+            try:
+                service.calendars().get(calendarId=auth_record.calendar_id).execute()
+                calendar_id = auth_record.calendar_id
+            except HttpError:
+                pass
+                
+        created_event = service.events().insert(
+            calendarId=calendar_id, 
+            body=event_body,
+            conferenceDataVersion=1
+        ).execute()
+        
+        meet_link = created_event.get('hangoutLink')
+        _safe_log(f"Created Meet link {meet_link}", user_id=user.id)
+        return meet_link
+    except Exception as e:
+        _safe_log(f"Failed to create Google Meet link: {e}", user_id=user.id)
+        return None

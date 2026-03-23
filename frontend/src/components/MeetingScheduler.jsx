@@ -225,7 +225,7 @@ const MeetingScheduler = () => {
 
             {/* Meetings List */}
             <div className="space-y-4">
-                {meetings.length === 0 ? (
+                {(!Array.isArray(meetings) || meetings.length === 0) ? (
                     <Card>
                         <CardContent className="py-8 text-center text-gray-500">
                             No meetings scheduled. Click "Schedule Meeting" to create one.
@@ -243,8 +243,8 @@ const MeetingScheduler = () => {
                                                 {meeting.meeting_type}
                                             </span>
                                             <span className={`text-xs px-2 py-1 rounded-full ${meeting.status === 'scheduled' ? 'bg-green-100 text-green-800' :
-                                                    meeting.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                                                        'bg-red-100 text-red-800'
+                                                meeting.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                                                    'bg-red-100 text-red-800'
                                                 }`}>
                                                 {meeting.status}
                                             </span>

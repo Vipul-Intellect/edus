@@ -76,7 +76,7 @@ const PerformanceAnalytics = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {analytics.recent_records.map((rec, i) => (
+                            {(analytics.recent_records && Array.isArray(analytics.recent_records) ? analytics.recent_records : []).map((rec, i) => (
                                 <tr key={i} className="border-t">
                                     <td className="p-3 font-medium">{rec.course_name}</td>
                                     <td className="p-3">{rec.attendance_percentage}%</td>

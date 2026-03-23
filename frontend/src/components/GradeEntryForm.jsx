@@ -192,7 +192,7 @@ const GradeEntryForm = () => {
                                 className="w-full px-3 py-2 border rounded-md"
                             >
                                 <option value="">-- Select Course --</option>
-                                {courses.map(c => (
+                                {(Array.isArray(courses) ? courses : []).map(c => (
                                     <option key={c.id} value={c.id}>{c.name}</option>
                                 ))}
                             </select>
@@ -207,7 +207,7 @@ const GradeEntryForm = () => {
                                 className="w-full px-3 py-2 border rounded-md"
                             >
                                 <option value="">-- Select Assessment --</option>
-                                {assessments.map(a => (
+                                {(Array.isArray(assessments) ? assessments : []).map(a => (
                                     <option key={a.id} value={a.id}>{a.title} ({a.assessment_type})</option>
                                 ))}
                             </select>
@@ -233,8 +233,8 @@ const GradeEntryForm = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
-                                        {students.length > 0 ? (
-                                            students.map(student => (
+                                        {(Array.isArray(students) ? students : []).length > 0 ? (
+                                            (Array.isArray(students) ? students : []).map(student => (
                                                 <tr key={student.id} className="hover:bg-gray-50">
                                                     <td className="px-4 py-3 font-medium">{student.roll_number}</td>
                                                     <td className="px-4 py-3">{student.full_name}</td>
