@@ -205,6 +205,12 @@ const navigationItems = [
     url: "/teacher#meetings",
     icon: Video,
     role: "teacher",
+  },
+  {
+    title: "Send Notification",
+    url: "/teacher#notify",
+    icon: Bell,
+    role: "teacher",
   }
 ];
 

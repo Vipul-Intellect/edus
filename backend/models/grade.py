@@ -23,7 +23,7 @@ class Grade(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    student = db.relationship("User", foreign_keys=[student_id], backref="grades_received")
+    student = db.relationship("User", foreign_keys=[student_id], backref=db.backref("grades_received", cascade="all, delete-orphan"))
     grader = db.relationship("User", foreign_keys=[graded_by], backref="grades_given")
     assessment = db.relationship("Assessment", back_populates="grades")
     

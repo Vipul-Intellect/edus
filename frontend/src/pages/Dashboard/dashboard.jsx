@@ -27,6 +27,7 @@ import DepartmentManagement from "../../components/Dashboard/DepartmentManagemen
 import AdminTimetableEditor from "../../components/Dashboard/AdminTimetableEditor";
 import AdminCreateMeetingModal from "../../components/Dashboard/AdminCreateMeetingModal";
 import MyMeetingsModal from "../../components/Dashboard/MyMeetingsModal";
+import SendNotificationModal from "../../components/Dashboard/SendNotificationModal";
 
 
 export default function Dashboard() {
@@ -42,6 +43,7 @@ export default function Dashboard() {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateMeetingModal, setShowCreateMeetingModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showMyMeetingsModal, setShowMyMeetingsModal] = useState(false);
   const [meetings, setMeetings] = useState([]);
 
@@ -122,6 +124,7 @@ export default function Dashboard() {
           </div>
           <QuickActions onAction={(action) => {
             if (action === "create_meeting") setShowCreateMeetingModal(true);
+            if (action === "send_notification") setShowNotificationModal(true);
           }} />
         </div>
 
@@ -217,6 +220,11 @@ export default function Dashboard() {
             if (location.hash === "#meetings") navigate('/admin');
           }} 
           meetings={meetings}
+        />
+
+        <SendNotificationModal
+          isOpen={showNotificationModal}
+          onClose={() => setShowNotificationModal(false)}
         />
       </div>
     </div>

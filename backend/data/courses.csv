@@ -1,2 +1,11 @@
 name,type,credits,year,semester,dept_name,dept_id,faculty_name
-daa,theory,3,1,1,computer science,1,yash
+daa,theory,3,1,1,computer science,1,Stuti mehla
+os,theory,3,1,1,computer science,1,upasana lakhina
+m3,theory,3,1,1,computer science,1,yash
+maths,theory,3,1,1,electronics,2,Yogesh
+digital electronics,theory,3,1,1,electronics,2,mahajan
+computer network,theory,3,1,1,computer science,1,Anju gandhi
+computer architecture,theory,3,1,1,aiml,4,Anju gandhi
+english,theory,3,1,1,aiml,4,jaya rani
+probablity,theory,3,1,1,aiml,4,Stuti mehla
+machine learning,lab,3,1,1,aiml,4,Anju gandhi

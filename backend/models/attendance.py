@@ -15,7 +15,7 @@ class Attendance(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    student = db.relationship("User", foreign_keys=[student_id], backref="attendance_records")
+    student = db.relationship("User", foreign_keys=[student_id], backref=db.backref("attendance_records", cascade="all, delete-orphan"))
     marker = db.relationship("User", foreign_keys=[marked_by])
-    course = db.relationship("Course", backref="attendance_records")
-    timetable_entry = db.relationship("Timetable", backref="attendance_records")
+    course = db.relationship("Course", backref=db.backref("attendance_records", cascade="all, delete-orphan"))
+    timetable_entry = db.relationship("Timetable", backref=db.backref("attendance_records", cascade="all, delete-orphan"))

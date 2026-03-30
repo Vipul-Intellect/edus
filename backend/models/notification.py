@@ -24,7 +24,7 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    user = db.relationship("User", backref="notifications")
+    user = db.relationship("User", backref=db.backref("notifications", cascade="all, delete-orphan"))
     
     def to_dict(self):
         return {
@@ -76,7 +76,7 @@ class NotificationPreference(db.Model):
     
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    user = db.relationship("User", backref=db.backref("notification_preferences", uselist=False))
+    user = db.relationship("User", backref=db.backref("notification_preferences", uselist=False, cascade="all, delete-orphan"))
 
     def to_dict(self):
         return {

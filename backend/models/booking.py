@@ -31,7 +31,7 @@ class ResourceBooking(db.Model):
     
     # Relationships
     resource = db.relationship("Resource", back_populates="bookings")
-    user = db.relationship("User", foreign_keys=[user_id], backref="my_bookings")
+    user = db.relationship("User", foreign_keys=[user_id], backref=db.backref("my_bookings", cascade="all, delete-orphan"))
     approver = db.relationship("User", foreign_keys=[approved_by], backref="approved_bookings")
     
     def __repr__(self):

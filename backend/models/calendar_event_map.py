@@ -19,8 +19,8 @@ class CalendarEventMap(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    user = db.relationship('User', backref=db.backref('calendar_event_maps', lazy=True))
-    timetable = db.relationship('Timetable', backref=db.backref('calendar_event_maps', lazy=True))
+    user = db.relationship('User', backref=db.backref('calendar_event_maps', lazy=True, cascade="all, delete-orphan"))
+    timetable = db.relationship('Timetable', backref=db.backref('calendar_event_maps', lazy=True, cascade="all, delete-orphan"))
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'timetable_id', name='uq_user_timetable'),

@@ -11,4 +11,4 @@ class ChatbotConversation(db.Model):
     response_type = db.Column(db.String(20), default="text")  # text, timetable, error, info
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = db.relationship("User", backref="chat_conversations")
+    user = db.relationship("User", backref=db.backref("chat_conversations", cascade="all, delete-orphan"))

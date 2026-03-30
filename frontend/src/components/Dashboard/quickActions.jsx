@@ -34,7 +34,7 @@ export default function QuickActions({ onAction }) {
     },
     {
       label: "Notify",
-      url: "/admin/notifications",
+      action: "send_notification",
       icon: Bell,
       variant: "outline"
     }

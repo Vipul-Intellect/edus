@@ -32,7 +32,7 @@ class Assessment(db.Model):
     
     # Relationships
     course = db.relationship("Course", backref="assessments")
-    creator = db.relationship("User", backref="created_assessments")
+    creator = db.relationship("User", backref=db.backref("created_assessments", cascade="all, delete-orphan"))
     grades = db.relationship("Grade", back_populates="assessment", cascade="all, delete-orphan")
     
     def __repr__(self):

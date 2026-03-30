@@ -286,6 +286,19 @@ class ApiService {
     return this.makeRequest('/admin/users');
   }
 
+  async updateUser(userId, userData) {
+    return this.makeRequest(`/admin/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData)
+    });
+  }
+
+  async deleteUser(userId) {
+    return this.makeRequest(`/admin/users/${userId}`, {
+      method: 'DELETE'
+    });
+  }
+
   async adminApproveSwap(requestId) {
     return this.makeRequest(`/admin/swap-requests/${requestId}/approve`, {
       method: 'POST'
@@ -1028,6 +1041,46 @@ class ApiService {
 
     async createMeeting(meetingData) {
         return this.adminCreateMeeting(meetingData);
+    }
+
+    // ==================== NOTIFICATIONS ====================
+
+    async getNotifications() {
+        return this.makeRequest('/api/notifications');
+    }
+
+    async markNotificationRead(id) {
+        return this.makeRequest(`/api/notifications/${id}/read`, { method: 'PUT' });
+    }
+
+    async markAllNotificationsRead() {
+        return this.makeRequest('/api/notifications/read-all', { method: 'PUT' });
+    }
+
+    async clearAllNotifications() {
+        return this.makeRequest('/api/notifications', { method: 'DELETE' });
+    }
+
+    async getNotificationPreferences() {
+        return this.makeRequest('/api/notifications/preferences');
+    }
+
+    async updateNotificationPreferences(data) {
+        return this.makeRequest('/api/notifications/preferences', {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async sendNotification(data) {
+        return this.makeRequest('/api/admin/notifications/send', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async getNotificationTargets() {
+        return this.makeRequest('/api/admin/notifications/targets');
     }
 }
 

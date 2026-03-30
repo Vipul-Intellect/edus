@@ -1,4 +1,5 @@
 id,dept_name,sections,faculty
-1,computer science,"A, B",yash
-2,electronics,,
+1,computer science,"A, B, A, B","yash, geeta verma, Preeti nehra"
+2,electronics,"A, B","Yogesh, mahajan"
 3,mathematics,,pooja
+4,aiml,"A, B","Anju gandhi, upasana lakhina, Stuti mehla, jaya rani"

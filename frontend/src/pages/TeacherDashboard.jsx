@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import MyRequestsModal from "./Teachers/MyRequestsModal";
 import MyMeetingsModal from "../components/Dashboard/MyMeetingsModal";
+import SendNotificationModal from "../components/Dashboard/SendNotificationModal";
 
 const ProfileModal = ({ isOpen, onClose, teacher }) => {
   if (!isOpen) return null;
@@ -106,6 +107,7 @@ export default function TeacherDashboard({ onLogout }) {
   const [showMyRequestsModal, setShowMyRequestsModal] = useState(false);
   const [showCreateMeetingModal, setShowCreateMeetingModal] = useState(false);
   const [showMyMeetingsModal, setShowMyMeetingsModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   useEffect(() => {
     loadTeacherData();
@@ -123,6 +125,8 @@ export default function TeacherDashboard({ onLogout }) {
         setShowMyRequestsModal(true);
       } else if (location.hash === "#meetings") {
         setShowMyMeetingsModal(true);
+      } else if (location.hash === "#notify") {
+        setShowNotificationModal(true);
       } else if (location.hash === "#schedule") {
         const el = document.getElementById("schedule");
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -377,6 +381,16 @@ export default function TeacherDashboard({ onLogout }) {
             <CreateMeetingCard
               onCreateClick={() => setShowCreateMeetingModal(true)}
             />
+            <div
+              className="group cursor-pointer rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-all duration-300"
+              onClick={() => setShowNotificationModal(true)}
+            >
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 mb-3 group-hover:scale-110 transition-transform duration-300">
+                <Bell className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">Send Notification</h3>
+              <p className="text-sm text-gray-500 mt-1">Broadcast an announcement</p>
+            </div>
             {meetings.length > 0 && (
               <ActiveMeetingsCard meetings={meetings} />
             )}
@@ -439,6 +453,11 @@ export default function TeacherDashboard({ onLogout }) {
           if (location.hash === "#meetings") navigate('/teacher');
         }}
         meetings={meetings}
+      />
+
+      <SendNotificationModal
+        isOpen={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
       />
     </div>
   );
@@ -560,7 +579,7 @@ function TodaySchedule({ classes, isLoading }) {
 }
 
 // Quick Actions Component
-function QuickActions({ onSwapClick, onLeaveClick, onProfileClick }) {
+function QuickActions({ onSwapClick, onLeaveClick, onProfileClick, onNotificationClick }) {
   const navigate = useNavigate();
 
   return (
@@ -584,9 +603,9 @@ function QuickActions({ onSwapClick, onLeaveClick, onProfileClick }) {
           <FileText className="w-4 h-4" />
           Apply for Leave
         </Button>
-        <Button className="w-full justify-start gap-2" variant="outline">
-          <Bell className="w-4 h-4" />
-          View Notifications
+        <Button className="w-full justify-start gap-2" variant="outline" onClick={onNotificationClick}>
+          <Bell className="w-4 h-4 text-blue-500" />
+          Send Notification
         </Button>
         <Button className="w-full justify-start gap-2" variant="outline" onClick={onProfileClick}>
           <Users className="w-4 h-4" />

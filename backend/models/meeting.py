@@ -37,7 +37,7 @@ class Meeting(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    organizer = db.relationship("User", backref="organized_meetings")
+    organizer = db.relationship("User", backref=db.backref("organized_meetings", cascade="all, delete-orphan"))
     participants = db.relationship("FacultyMeetingParticipation", back_populates="meeting", cascade="all, delete-orphan")
     
     def calculate_duration(self):

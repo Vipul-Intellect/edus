@@ -13,4 +13,4 @@ class SystemAnnouncement(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=True)
 
-    creator = db.relationship("User", backref="announcements")
+    creator = db.relationship("User", backref=db.backref("announcements", cascade="all, delete-orphan"))

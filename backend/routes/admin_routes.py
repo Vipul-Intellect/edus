@@ -49,6 +49,72 @@ def admin_get_users(current_user):
         return jsonify({"error": f"Failed to fetch users: {str(e)}"}), 500
 
 
+@admin_bp.route("/users/<int:user_id>", methods=["PUT", "DELETE", "OPTIONS"])
+@token_required
+@admin_required
+def admin_manage_user(current_user, user_id):
+    """Edit or delete a specific user"""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if request.method == "PUT":
+        try:
+            data = request.json or {}
+
+            # Prevent editing own account role/status accidentally
+            if user_id == current_user.id and data.get("role") and data["role"] != current_user.role:
+                return jsonify({"error": "You cannot change your own role"}), 400
+
+            if "full_name" in data and data["full_name"]:
+                user.full_name = data["full_name"].strip()
+            if "email" in data:
+                user.email = data["email"].strip() if data["email"] else None
+            if "role" in data and data["role"] in ["admin", "teacher", "student"]:
+                user.role = data["role"]
+            if "is_active" in data:
+                user.is_active = bool(data["is_active"])
+            if "dept_name" in data and data["dept_name"]:
+                dept = Department.query.filter_by(dept_name=data["dept_name"]).first()
+                if dept:
+                    user.dept_id = dept.id
+                else:
+                    return jsonify({"error": f"Department '{data['dept_name']}' not found"}), 404
+            if "password" in data and data["password"]:
+                if len(data["password"]) < 6:
+                    return jsonify({"error": "Password must be at least 6 characters"}), 400
+                user.set_password(data["password"])
+
+            db.session.commit()
+            return jsonify({
+                "message": f"User '{user.username}' updated successfully",
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "full_name": user.full_name,
+                    "email": user.email,
+                    "role": user.role,
+                    "is_active": user.is_active,
+                    "department": user.department.dept_name if user.department else None
+                }
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Failed to update user: {str(e)}"}), 500
+
+    elif request.method == "DELETE":
+        try:
+            if user_id == current_user.id:
+                return jsonify({"error": "You cannot delete your own account"}), 400
+            username = user.username
+            db.session.delete(user)
+            db.session.commit()
+            return jsonify({"message": f"User '{username}' deleted successfully"}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Failed to delete user: {str(e)}"}), 500
+
+
 @admin_bp.route("/stats", methods=["GET"])
 @token_required
 @admin_required

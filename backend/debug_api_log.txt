@@ -872,3 +872,156 @@ Found 0 swap requests.
 GET /swap-requests: User=yash (ID 6)
 Resolved Faculty ID: 1
 Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.
+GET /swap-requests: User=Anju gandhi (ID 18)
+Resolved Faculty ID: 4
+Found 0 swap requests.

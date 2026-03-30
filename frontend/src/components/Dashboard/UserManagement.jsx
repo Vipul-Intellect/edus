@@ -2,26 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Filter, Upload, FileUp } from "lucide-react";
+import { Users, Search, Filter, Upload, FileUp, Pencil, Trash2, ShieldCheck, ShieldOff, AlertTriangle, Loader2 } from "lucide-react";
 import ApiService from "../../services/api";
 
 export default function UserManagement() {
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
+    const [departments, setDepartments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
+
+    // Upload modal state
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [uploadType, setUploadType] = useState("student");
     const [uploadFile, setUploadFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    // Edit modal state
+    const [editingUser, setEditingUser] = useState(null);
+    const [editForm, setEditForm] = useState({});
+    const [isSaving, setIsSaving] = useState(false);
+    const [editError, setEditError] = useState(null);
+
+    // Delete confirm state
+    const [deletingUser, setDeletingUser] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     useEffect(() => {
         fetchUsers();
+        fetchDepartments();
     }, []);
 
     useEffect(() => {
@@ -42,10 +56,18 @@ export default function UserManagement() {
         }
     };
 
+    const fetchDepartments = async () => {
+        try {
+            const data = await ApiService.getDepartments();
+            const list = Array.isArray(data) ? data : (data?.departments || []);
+            setDepartments(list);
+        } catch (err) {
+            console.error("Failed to fetch departments", err);
+        }
+    };
+
     const filterUsers = () => {
         let filtered = users;
-
-        // Filter by search term
         if (searchTerm) {
             filtered = filtered.filter(user =>
                 user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,35 +75,82 @@ export default function UserManagement() {
                 user.email?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
-
-        // Filter by role
         if (roleFilter !== "all") {
             filtered = filtered.filter(user => user.role === roleFilter);
         }
-
         setFilteredUsers(filtered);
     };
 
     const getRoleBadgeColor = (role) => {
         switch (role) {
-            case "admin":
-                return "bg-red-100 text-red-800";
-            case "teacher":
-                return "bg-blue-100 text-blue-800";
-            case "student":
-                return "bg-green-100 text-green-800";
-            default:
-                return "bg-gray-100 text-gray-800";
+            case "admin": return "bg-red-100 text-red-800 border-red-200";
+            case "teacher": return "bg-blue-100 text-blue-800 border-blue-200";
+            case "student": return "bg-green-100 text-green-800 border-green-200";
+            default: return "bg-gray-100 text-gray-800";
         }
     };
 
+    // ============ EDIT ============
+    const openEditModal = (user) => {
+        setEditingUser(user);
+        setEditError(null);
+        setEditForm({
+            full_name: user.full_name || "",
+            email: user.email || "",
+            role: user.role,
+            dept_name: user.department || "",
+            is_active: user.is_active !== false,
+            password: ""  // blank = don't change
+        });
+    };
+
+    const handleEditSave = async () => {
+        setIsSaving(true);
+        setEditError(null);
+        try {
+            const payload = {
+                full_name: editForm.full_name,
+                email: editForm.email || null,
+                role: editForm.role,
+                dept_name: editForm.dept_name || null,
+                is_active: editForm.is_active,
+            };
+            // Only include password if filled in
+            if (editForm.password.trim()) {
+                payload.password = editForm.password.trim();
+            }
+            await ApiService.updateUser(editingUser.id, payload);
+            setEditingUser(null);
+            fetchUsers();
+        } catch (err) {
+            setEditError(err.message || "Failed to update user");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // ============ DELETE ============
+    const openDeleteConfirm = (user) => {
+        setDeletingUser(user);
+    };
+
+    const handleDeleteConfirm = async () => {
+        setIsDeleting(true);
+        try {
+            await ApiService.deleteUser(deletingUser.id);
+            setDeletingUser(null);
+            fetchUsers();
+        } catch (err) {
+            alert(err.message || "Failed to delete user");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    // ============ UPLOAD ============
     const handleFileUpload = async (e) => {
         e.preventDefault();
-        if (!uploadFile) {
-            alert("Please select a file first");
-            return;
-        }
-
+        if (!uploadFile) { alert("Please select a file first"); return; }
         try {
             setIsUploading(true);
             let response;
@@ -90,13 +159,11 @@ export default function UserManagement() {
             } else {
                 response = await ApiService.uploadFaculty(uploadFile);
             }
-
             alert(response.message || "Upload successful!");
             setIsUploadModalOpen(false);
             setUploadFile(null);
-            fetchUsers(); // Refresh list
+            fetchUsers();
         } catch (error) {
-            console.error("Upload failed:", error);
             alert(error.message || "Upload failed");
         } finally {
             setIsUploading(false);
@@ -140,7 +207,8 @@ export default function UserManagement() {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                {/* Upload Modal */}
+
+                {/* ===== UPLOAD MODAL ===== */}
                 <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
                     <DialogContent>
                         <DialogHeader>
@@ -150,9 +218,7 @@ export default function UserManagement() {
                             <div className="space-y-2">
                                 <Label>User Type</Label>
                                 <Select value={uploadType} onValueChange={setUploadType}>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="student">Students</SelectItem>
                                         <SelectItem value="teacher">Teachers</SelectItem>
@@ -161,37 +227,156 @@ export default function UserManagement() {
                             </div>
                             <div className="space-y-2">
                                 <Label>CSV File</Label>
-                                <Input
-                                    type="file"
-                                    accept=".csv"
-                                    onChange={(e) => setUploadFile(e.target.files[0])}
-                                />
+                                <Input type="file" accept=".csv" onChange={(e) => setUploadFile(e.target.files[0])} />
                                 <p className="text-xs text-muted-foreground">
                                     {uploadType === "student"
                                         ? "Required columns: username, password, dept_name, year, section_name"
-                                        : "Required columns: faculty_name, dept_name, username, password, email, max_hours"
-                                    }
+                                        : "Required columns: faculty_name, dept_name, username, password, email, max_hours"}
                                 </p>
                             </div>
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)}>
-                                    Cancel
-                                </Button>
+                                <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)}>Cancel</Button>
                                 <Button type="submit" disabled={isUploading || !uploadFile}>
-                                    {isUploading ? (
-                                        <>
-                                            <FileUp className="w-4 h-4 mr-2 animate-bounce" />
-                                            Uploading...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Upload className="w-4 h-4 mr-2" />
-                                            Upload
-                                        </>
-                                    )}
+                                    {isUploading ? <><FileUp className="w-4 h-4 mr-2 animate-bounce" />Uploading...</> : <><Upload className="w-4 h-4 mr-2" />Upload</>}
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* ===== EDIT MODAL ===== */}
+                <Dialog open={!!editingUser} onOpenChange={(open) => { if (!open) setEditingUser(null); }}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <Pencil className="w-4 h-4 text-indigo-600" />
+                                Edit User — <span className="text-indigo-600">{editingUser?.username}</span>
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        {editError && (
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                                {editError}
+                            </div>
+                        )}
+
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <Label>Full Name</Label>
+                                    <Input
+                                        value={editForm.full_name}
+                                        onChange={e => setEditForm(p => ({ ...p, full_name: e.target.value }))}
+                                        placeholder="Full Name"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label>Email</Label>
+                                    <Input
+                                        type="email"
+                                        value={editForm.email}
+                                        onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))}
+                                        placeholder="Email (optional)"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <Label>Role</Label>
+                                    <Select value={editForm.role} onValueChange={v => setEditForm(p => ({ ...p, role: v }))}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="admin">Admin</SelectItem>
+                                            <SelectItem value="teacher">Teacher</SelectItem>
+                                            <SelectItem value="student">Student</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label>Department</Label>
+                                    <Select value={editForm.dept_name || "__none__"} onValueChange={v => setEditForm(p => ({ ...p, dept_name: v === "__none__" ? "" : v }))}>
+                                        <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">— None —</SelectItem>
+                                            {departments.map(d => (
+                                                <SelectItem key={d.id} value={d.dept_name}>{d.dept_name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <Label>New Password <span className="text-gray-400 font-normal">(leave blank to keep unchanged)</span></Label>
+                                <Input
+                                    type="password"
+                                    value={editForm.password}
+                                    onChange={e => setEditForm(p => ({ ...p, password: e.target.value }))}
+                                    placeholder="Leave blank to keep current password"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Account Status</p>
+                                    <p className="text-xs text-gray-500">{editForm.is_active ? "User can log in" : "Login is blocked"}</p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={editForm.is_active ? "outline" : "default"}
+                                    className={editForm.is_active ? "text-red-600 border-red-200 hover:bg-red-50" : "bg-green-600 hover:bg-green-700 text-white"}
+                                    onClick={() => setEditForm(p => ({ ...p, is_active: !p.is_active }))}
+                                >
+                                    {editForm.is_active
+                                        ? <><ShieldOff className="w-3 h-3 mr-1" /> Deactivate</>
+                                        : <><ShieldCheck className="w-3 h-3 mr-1" /> Activate</>
+                                    }
+                                </Button>
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setEditingUser(null)} disabled={isSaving}>Cancel</Button>
+                            <Button onClick={handleEditSave} disabled={isSaving} className="bg-indigo-600 hover:bg-indigo-700">
+                                {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* ===== DELETE CONFIRM MODAL ===== */}
+                <Dialog open={!!deletingUser} onOpenChange={(open) => { if (!open) setDeletingUser(null); }}>
+                    <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-red-700">
+                                <Trash2 className="w-5 h-5" />
+                                Delete User?
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="py-2">
+                            <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
+                                <p className="text-sm text-red-800">
+                                    You are about to permanently delete:
+                                </p>
+                                <p className="font-bold text-red-900 mt-1">
+                                    {deletingUser?.full_name || deletingUser?.username} <span className="font-normal text-red-700">(@{deletingUser?.username})</span>
+                                </p>
+                                <p className="text-xs text-red-600 mt-2">This action cannot be undone. All associated data will be removed.</p>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeletingUser(null)} disabled={isDeleting}>Cancel</Button>
+                            <Button
+                                onClick={handleDeleteConfirm}
+                                disabled={isDeleting}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                                {isDeleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</> : <><Trash2 className="w-4 h-4 mr-1" />Delete User</>}
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
 
@@ -223,7 +408,7 @@ export default function UserManagement() {
                 </div>
 
                 {/* Users Table */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto rounded-lg border">
                     <table className="w-full">
                         <thead>
                             <tr className="border-b bg-gray-50">
@@ -233,31 +418,52 @@ export default function UserManagement() {
                                 <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700">Role</th>
                                 <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700">Department</th>
                                 <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700">Status</th>
+                                <th className="text-right py-3 px-4 font-semibold text-sm text-gray-700">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="text-center py-8 text-gray-500">
-                                        No users found
-                                    </td>
+                                    <td colSpan="7" className="text-center py-8 text-gray-500">No users found</td>
                                 </tr>
                             ) : (
                                 filteredUsers.map((user) => (
-                                    <tr key={user.id} className="border-b hover:bg-gray-50">
+                                    <tr key={user.id} className="border-b hover:bg-gray-50 transition-colors">
                                         <td className="py-3 px-4 font-medium text-gray-900">{user.username}</td>
                                         <td className="py-3 px-4 text-gray-700">{user.full_name || '-'}</td>
-                                        <td className="py-3 px-4 text-gray-700">{user.email || '-'}</td>
+                                        <td className="py-3 px-4 text-gray-500 text-sm">{user.email || '-'}</td>
                                         <td className="py-3 px-4">
-                                            <Badge className={getRoleBadgeColor(user.role)}>
+                                            <Badge className={`text-xs border ${getRoleBadgeColor(user.role)}`}>
                                                 {user.role}
                                             </Badge>
                                         </td>
-                                        <td className="py-3 px-4 text-gray-700">{user.department || '-'}</td>
+                                        <td className="py-3 px-4 text-gray-700 text-sm">{user.department || '-'}</td>
                                         <td className="py-3 px-4">
-                                            <Badge className={user.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                                                {user.is_active ? "Active" : "Inactive"}
+                                            <Badge className={user.is_active !== false ? "bg-green-100 text-green-800 border border-green-200" : "bg-gray-100 text-gray-500 border"}>
+                                                {user.is_active !== false ? "Active" : "Inactive"}
                                             </Badge>
+                                        </td>
+                                        <td className="py-3 px-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-7 px-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                                                    onClick={() => openEditModal(user)}
+                                                >
+                                                    <Pencil className="w-3 h-3 mr-1" />
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-7 px-2 text-red-600 border-red-200 hover:bg-red-50"
+                                                    onClick={() => openDeleteConfirm(user)}
+                                                >
+                                                    <Trash2 className="w-3 h-3 mr-1" />
+                                                    Delete
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

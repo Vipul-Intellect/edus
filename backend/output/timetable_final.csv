@@ -1,9 +1,81 @@
 course,section,faculty,room,day,start_time,year,semester
-daa,A,yash,b-201,Monday,12:00,1,1
-daa,A,yash,b-201,Monday,13:00,1,1
-daa,A,yash,b-201,Monday,14:00,1,1
-daa,A,yash,b-201,Monday,15:00,1,1
-daa,B,yash,b-201,Monday,09:00,1,1
-daa,B,yash,b-201,Monday,10:00,1,1
-daa,B,yash,b-201,Monday,11:00,1,1
-daa,B,yash,b-201,Friday,17:00,1,1
+daa,A,Stuti mehla,b-121,Monday,10:00,1,1
+daa,A,Stuti mehla,b-122,Monday,12:00,1,1
+daa,A,Stuti mehla,b-122,Tuesday,16:00,1,1
+daa,A,Stuti mehla,b-122,Wednesday,14:00,1,1
+daa,B,Stuti mehla,b-121,Tuesday,14:00,1,1
+daa,B,Stuti mehla,b-122,Wednesday,15:00,1,1
+daa,B,Stuti mehla,b-121,Thursday,17:00,1,1
+daa,B,Stuti mehla,b-122,Friday,10:00,1,1
+os,A,upasana lakhina,b-121,Monday,11:00,1,1
+os,A,upasana lakhina,b-121,Monday,14:00,1,1
+os,A,upasana lakhina,b-201,Thursday,09:00,1,1
+os,A,upasana lakhina,b-121,Thursday,14:00,1,1
+os,B,upasana lakhina,b-201,Tuesday,11:00,1,1
+os,B,upasana lakhina,b-201,Wednesday,09:00,1,1
+os,B,upasana lakhina,b-122,Thursday,15:00,1,1
+os,B,upasana lakhina,b-121,Friday,15:00,1,1
+m3,A,yash,b-201,Tuesday,14:00,1,1
+m3,A,yash,b-122,Wednesday,16:00,1,1
+m3,A,yash,b-121,Thursday,10:00,1,1
+m3,A,yash,b-121,Thursday,13:00,1,1
+m3,B,yash,b-121,Tuesday,10:00,1,1
+m3,B,yash,b-122,Wednesday,11:00,1,1
+m3,B,yash,b-122,Thursday,16:00,1,1
+m3,B,yash,b-122,Friday,16:00,1,1
+maths,A,Yogesh,b-201,Monday,10:00,1,1
+maths,A,Yogesh,b-122,Monday,14:00,1,1
+maths,A,Yogesh,b-121,Wednesday,09:00,1,1
+maths,A,Yogesh,b-122,Friday,11:00,1,1
+maths,B,Yogesh,b-122,Tuesday,15:00,1,1
+maths,B,Yogesh,b-121,Wednesday,12:00,1,1
+maths,B,Yogesh,b-121,Thursday,16:00,1,1
+maths,B,Yogesh,b-201,Thursday,17:00,1,1
+digital electronics,A,mahajan,b-121,Monday,15:00,1,1
+digital electronics,A,mahajan,b-201,Tuesday,09:00,1,1
+digital electronics,A,mahajan,b-121,Tuesday,11:00,1,1
+digital electronics,A,mahajan,b-201,Friday,13:00,1,1
+digital electronics,B,mahajan,b-201,Monday,14:00,1,1
+digital electronics,B,mahajan,b-122,Thursday,10:00,1,1
+digital electronics,B,mahajan,b-122,Thursday,12:00,1,1
+digital electronics,B,mahajan,b-201,Thursday,13:00,1,1
+computer network,A,Anju gandhi,b-122,Tuesday,12:00,1,1
+computer network,A,Anju gandhi,b-201,Tuesday,13:00,1,1
+computer network,A,Anju gandhi,b-201,Thursday,12:00,1,1
+computer network,A,Anju gandhi,b-121,Friday,13:00,1,1
+computer network,B,Anju gandhi,b-201,Tuesday,17:00,1,1
+computer network,B,Anju gandhi,b-201,Wednesday,17:00,1,1
+computer network,B,Anju gandhi,b-121,Friday,11:00,1,1
+computer network,B,Anju gandhi,b-201,Friday,12:00,1,1
+computer architecture,A,Anju gandhi,b-121,Monday,09:00,1,1
+computer architecture,A,Anju gandhi,b-121,Tuesday,16:00,1,1
+computer architecture,A,Anju gandhi,b-201,Thursday,11:00,1,1
+computer architecture,A,Anju gandhi,b-121,Friday,09:00,1,1
+computer architecture,B,Anju gandhi,b-121,Tuesday,09:00,1,1
+computer architecture,B,Anju gandhi,b-201,Tuesday,15:00,1,1
+computer architecture,B,Anju gandhi,b-201,Wednesday,10:00,1,1
+computer architecture,B,Anju gandhi,b-121,Wednesday,14:00,1,1
+english,A,jaya rani,b-201,Monday,17:00,1,1
+english,A,jaya rani,b-121,Wednesday,16:00,1,1
+english,A,jaya rani,b-122,Thursday,13:00,1,1
+english,A,jaya rani,b-122,Friday,13:00,1,1
+english,B,jaya rani,b-122,Wednesday,12:00,1,1
+english,B,jaya rani,b-201,Thursday,14:00,1,1
+english,B,jaya rani,b-201,Friday,10:00,1,1
+english,B,jaya rani,b-201,Friday,11:00,1,1
+probablity,A,Stuti mehla,b-121,Tuesday,17:00,1,1
+probablity,A,Stuti mehla,b-201,Wednesday,13:00,1,1
+probablity,A,Stuti mehla,b-122,Thursday,09:00,1,1
+probablity,A,Stuti mehla,b-201,Friday,15:00,1,1
+probablity,B,Stuti mehla,b-201,Tuesday,12:00,1,1
+probablity,B,Stuti mehla,b-122,Tuesday,13:00,1,1
+probablity,B,Stuti mehla,b-121,Wednesday,17:00,1,1
+probablity,B,Stuti mehla,b-121,Thursday,11:00,1,1
+machine learning,A,Anju gandhi,b-121,Monday,13:00,1,1
+machine learning,A,Anju gandhi,b-122,Tuesday,10:00,1,1
+machine learning,A,Anju gandhi,b-121,Thursday,15:00,1,1
+machine learning,A,Anju gandhi,b-122,Friday,14:00,1,1
+machine learning,B,Anju gandhi,b-201,Wednesday,11:00,1,1
+machine learning,B,Anju gandhi,b-201,Thursday,16:00,1,1
+machine learning,B,Anju gandhi,b-122,Friday,15:00,1,1
+machine learning,B,Anju gandhi,b-121,Friday,17:00,1,1

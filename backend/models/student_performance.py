@@ -32,8 +32,8 @@ class StudentPerformance(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    student = db.relationship("User", backref="performance_records")
-    course = db.relationship("Course", backref="performance_records")
+    student = db.relationship("User", backref=db.backref("performance_records", cascade="all, delete-orphan"))
+    course = db.relationship("Course", backref=db.backref("performance_records", cascade="all, delete-orphan"))
     
     def update_metrics(self):
         """Update all performance metrics for this student-course combination"""

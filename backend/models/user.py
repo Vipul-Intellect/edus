@@ -17,7 +17,7 @@ class User(db.Model):
     roll_number = db.Column(db.String(20), nullable=True)
     attendance = db.Column(db.Float, default=0.0)
 
-    room_occupancies = db.relationship("RoomOccupancy", backref="user", lazy=True)
+    room_occupancies = db.relationship("RoomOccupancy", backref="user", lazy=True, cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

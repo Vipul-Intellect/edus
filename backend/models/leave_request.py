@@ -15,5 +15,5 @@ class LeaveRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    user = db.relationship("User", foreign_keys=[user_id], backref="leave_requests")
+    user = db.relationship("User", foreign_keys=[user_id], backref=db.backref("leave_requests", cascade="all, delete-orphan"))
     approver = db.relationship("User", foreign_keys=[approved_by], backref="approved_leave_requests")

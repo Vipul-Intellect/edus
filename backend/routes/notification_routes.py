@@ -176,34 +176,53 @@ def test_notification(current_user):
 @notification_bp.route("/admin/notifications/send", methods=["POST", "OPTIONS"])
 @token_required
 def send_notification(current_user):
-    """Admin-only: Send notification to users"""
-    if current_user.role not in ['admin', 'teacher']: # Maybe teachers can too? User asked for Admin.
+    """Admin/Teacher: Send notification to users with granular targeting"""
+    if current_user.role not in ['admin', 'teacher']:
         return jsonify({"error": "Unauthorized"}), 403
-        
+
     try:
+        from models.department import Department
+        from models.section import Section
+
         data = request.json
         title = data.get('title')
         message = data.get('message')
-        # target_audience: 'all', 'role', 'user'
-        target_audience = data.get('target_audience', 'all') 
-        target_role = data.get('target_role') # 'student', 'teacher', 'admin'
-        target_user_id = data.get('target_user_id')
-        
+
+        # target_audience: 'all', 'role', 'user', 'department', 'section'
+        target_audience = data.get('target_audience', 'all')
+        target_role = data.get('target_role')          # 'student', 'teacher', 'admin'
+        target_user_id = data.get('target_user_id')   # specific user id
+        target_dept_id = data.get('target_dept_id')   # specific department id
+        target_section_id = data.get('target_section_id')  # specific section id
+
         if not title or not message:
             return jsonify({"error": "Title and message are required"}), 400
-            
+
         users_to_notify = []
-        
+
         if target_audience == 'user' and target_user_id:
             user = User.query.get(target_user_id)
-            if user: users_to_notify.append(user)
-            
+            if user:
+                users_to_notify.append(user)
+
         elif target_audience == 'role' and target_role:
-            users_to_notify = User.query.filter_by(role=target_role).all()
-            
+            users_to_notify = User.query.filter_by(role=target_role, is_active=True).all()
+
+        elif target_audience == 'department' and target_dept_id:
+            # All active users (students + teachers) in a department
+            users_to_notify = User.query.filter_by(dept_id=target_dept_id, is_active=True).all()
+
+        elif target_audience == 'section' and target_section_id:
+            # Students in a specific section
+            users_to_notify = User.query.filter_by(
+                section_id=target_section_id,
+                role='student',
+                is_active=True
+            ).all()
+
         elif target_audience == 'all':
-            users_to_notify = User.query.all()
-            
+            users_to_notify = User.query.filter_by(is_active=True).all()
+
         count = 0
         for user in users_to_notify:
             create_notification(
@@ -214,9 +233,44 @@ def send_notification(current_user):
                 type='info'
             )
             count += 1
-            
-        return jsonify({"message": f"Notification sent to {count} users"}), 200
-        
+
+        return jsonify({"message": f"Notification sent to {count} users", "count": count}), 200
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@notification_bp.route("/admin/notifications/targets", methods=["GET", "OPTIONS"])
+@token_required
+def get_notification_targets(current_user):
+    """Get lists of users, departments, sections for notification targeting"""
+    if current_user.role not in ['admin', 'teacher']:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        from models.department import Department
+        from models.section import Section
+
+        # All active users (excluding current user)
+        users = User.query.filter(
+            User.is_active == True,
+            User.id != current_user.id
+        ).order_by(User.full_name).all()
+
+        # All departments
+        departments = Department.query.order_by(Department.dept_name).all()
+
+        # All sections with their department
+        sections = Section.query.order_by(Section.year, Section.name).all()
+
+        return jsonify({
+            "users": [{"id": u.id, "name": u.full_name or u.username, "role": u.role, "dept": u.department.dept_name if u.department else None} for u in users],
+            "departments": [{"id": d.id, "name": d.dept_name} for d in departments],
+            "sections": [{"id": s.id, "name": s.name, "year": s.year, "dept_id": s.dept_id, "dept_name": s.department.dept_name if s.department else None} for s in sections]
+        }), 200
+
     except Exception as e:
         import traceback
         traceback.print_exc()

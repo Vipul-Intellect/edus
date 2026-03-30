@@ -29,7 +29,7 @@ class UserGoogleAuth(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    user = db.relationship('User', backref=db.backref('google_auth', uselist=False))
+    user = db.relationship('User', backref=db.backref('google_auth', uselist=False, cascade="all, delete-orphan"))
 
     def to_dict(self):
         return {

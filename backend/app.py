@@ -56,8 +56,22 @@ def create_app(config_name=None):
 
     # Create database tables and seed default admin if needed
     with app.app_context():
-        db.create_all()
-        _seed_admin()
+        try:
+            db.create_all()
+            _seed_admin()
+        except Exception as e:
+            print("=" * 60)
+            print("DATABASE CONNECTION ERROR")
+            print("=" * 60)
+            print(f"Error: {e}")
+            if "could not translate host name" in str(e) or "dpg-" in str(e):
+                print("\nTIP: It looks like you're using Render's Internal Database URL.")
+                print("If you are connecting from outside Render OR if your app is in a different region,")
+                print("please use the 'External Database URL' from your Render PostgreSQL dashboard.")
+            print("=" * 60)
+            # Still raise if in production to prevent running in invalid state
+            # but maybe allow it for setup scripts if needed.
+            # For now, let's just log it clearly.
 
     # Register routes
     from routes.auth_routes import auth_bp
