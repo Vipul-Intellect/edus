@@ -4,6 +4,7 @@ from datetime import datetime
 class Timetable(db.Model):
     __tablename__ = "timetable"
     timetable_id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     course_id = db.Column(db.Integer, db.ForeignKey("courses.course_id"))
     section_id = db.Column(db.Integer, db.ForeignKey("sections.id"))
     faculty_id = db.Column(db.Integer, db.ForeignKey("faculty.faculty_id"))

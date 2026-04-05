@@ -15,6 +15,8 @@ timetable_bp = Blueprint('timetable', __name__)
 
 @timetable_bp.route("/get_timetable", methods=["GET", "OPTIONS"])
 def get_timetable():
+    if request.method == 'OPTIONS':
+        return jsonify({}), 200
     try:
         dept_name = request.args.get("dept_name")
         year = request.args.get("year")

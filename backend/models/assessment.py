@@ -6,6 +6,7 @@ class Assessment(db.Model):
     __tablename__ = "assessments"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     course_id = db.Column(db.Integer, db.ForeignKey("courses.course_id"), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     

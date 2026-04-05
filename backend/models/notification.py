@@ -8,6 +8,7 @@ class Notification(db.Model):
     __tablename__ = "notifications"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     
     # Content
@@ -74,6 +75,7 @@ class NotificationPreference(db.Model):
     __tablename__ = "notification_preferences"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
     
     # Channels

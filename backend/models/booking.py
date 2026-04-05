@@ -8,6 +8,7 @@ class ResourceBooking(db.Model):
     __tablename__ = "resource_bookings"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     resource_id = db.Column(db.Integer, db.ForeignKey("resources.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     

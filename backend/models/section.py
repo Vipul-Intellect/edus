@@ -3,6 +3,7 @@ from extensions import db
 class Section(db.Model):
     __tablename__ = "sections"
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     name = db.Column(db.String(1), nullable=False)  # A, B, C, etc.
     year = db.Column(db.Integer, nullable=False)
     dept_id = db.Column(db.Integer, db.ForeignKey("departments.id"))

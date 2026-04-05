@@ -10,33 +10,52 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g, abort
 from config import config
 from extensions import init_extensions, db, scheduler
 from models import *
-from utils import *
+from utils.tenant_middleware import load_tenant_from_token
+from utils.query_filter import setup_tenant_filtering
 
 def _seed_admin():
-    """Create default admin on first startup if no admin exists."""
+    """Create default college and admin on first startup if needed."""
     try:
         from models.user import User
+        from models.college import College
         from werkzeug.security import generate_password_hash
-        if not User.query.filter_by(role='admin').first():
-            admin = User(
-                username='admin',
-                password_hash=generate_password_hash('Admin@123'),
-                role='admin',
-                full_name='System Admin',
-                email='admin@school.com',
+        
+        # 1. Ensure Default College exists
+        default_college = College.query.filter_by(college_code='DEFAULT').first()
+        if not default_college:
+            default_college = College(
+                name='Default College',
+                college_code='DEFAULT',
+                feature_flags={'ai_chatbot': True, 'meetings': True, 'timetable': True},
+                subscription_tier='enterprise'
+            )
+            db.session.add(default_college)
+            db.session.commit()
+            print('[Seed] Default college created.')
+
+        # 3. Check for Super Admin (Platform Owner)
+        if not User.query.filter_by(role='superadmin').first():
+            super_admin = User(
+                username='superadmin',
+                college_id=default_college.id,
+                password_hash=generate_password_hash('Super@123'),
+                role='superadmin',
+                full_name='Platform Owner',
+                email='superadmin@edusync.com',
                 is_active=True
             )
-            db.session.add(admin)
+            db.session.add(super_admin)
             db.session.commit()
-            print('[Seed] Default admin created: username=admin password=Admin@123')
+            print('[Seed] Super admin created: username=superadmin password=Super@123')
+        
         else:
-            print('[Seed] Admin already exists, skipping seed.')
+            print('[Seed] System already initialized, skipping seed.')
     except Exception as e:
-        print(f'[Seed] Admin seed failed: {e}')
+        print(f'[Seed] Seeding failed: {e}')
         db.session.rollback()
 
 
@@ -79,6 +98,7 @@ def create_app(config_name=None):
 
     # Register routes
     from routes.auth_routes import auth_bp
+    from routes.super_admin import super_admin_bp
     from routes.admin_routes import admin_bp
     from routes.timetable_routes import timetable_bp
     from routes.faculty_routes import faculty_bp
@@ -97,41 +117,62 @@ def create_app(config_name=None):
     from routes.marks_routes import marks_bp
     from routes.assignment_routes import assignment_bp
 
+    # Register blueprints with prefixes that match the frontend (ApiService)
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(student_bp, url_prefix='/student')
-    # Timetable routes - some have no prefix, some have /teacher or /student
-    app.register_blueprint(timetable_bp)
-    # Faculty routes - /teacher prefix
+    app.register_blueprint(timetable_bp)  # Handles /get_timetable, etc.
     app.register_blueprint(faculty_bp, url_prefix='/teacher')
-    # Faculty workload routes - /teacher prefix
-    app.register_blueprint(workload_bp, url_prefix='/teacher')
-    # Performance routes - /teacher and /student prefixes
-    app.register_blueprint(performance_bp, url_prefix='/teacher')
-    # Also register for student access
-    app.register_blueprint(performance_bp, url_prefix='/student', name='student_performance')
-    # Resource routes - /api prefix for shared access
+    app.register_blueprint(leave_bp, url_prefix='/api/leave')
+    app.register_blueprint(upload_bp, url_prefix='/api/upload')
+    app.register_blueprint(chat_bp, url_prefix='/api/chat')
+    app.register_blueprint(legacy_bp)      # Handles /get_faculty, etc.
+    app.register_blueprint(super_admin_bp, url_prefix='/api/super')
+    app.register_blueprint(performance_bp, url_prefix='/api')
     app.register_blueprint(resource_bp, url_prefix='/api')
-    # Notification routes - /api prefix
     app.register_blueprint(notification_bp, url_prefix='/api')
-    # Google Calendar routes - /api prefix
     app.register_blueprint(google_calendar_bp, url_prefix='/api')
-    # Meeting routes - /api prefix
     app.register_blueprint(meeting_bp, url_prefix='/api')
-    # Assessment & Marks routes
     app.register_blueprint(assessment_bp, url_prefix='/api')
     app.register_blueprint(marks_bp, url_prefix='/api')
-    # Assignment routes
     app.register_blueprint(assignment_bp, url_prefix='/api')
     
     # Rooms status route - register separately at root level
     from routes.faculty_routes import get_rooms_status
     from utils.decorators import token_required
     app.add_url_rule('/rooms/status', 'get_rooms_status', token_required(get_rooms_status), methods=['GET', 'OPTIONS'])
-    app.register_blueprint(leave_bp, url_prefix='/api/leave')
-    app.register_blueprint(upload_bp, url_prefix='/upload')
-    app.register_blueprint(chat_bp, url_prefix='/api')
-    app.register_blueprint(legacy_bp)
+
+    @app.before_request
+    def handle_tenant_context():
+        # 1. Skip OPTIONS requests (CORS)
+        if request.method == "OPTIONS":
+            return
+        
+        # 2. Skip for public routes
+        # We check blueprint name, path prefixes, and common public endpoints
+        is_public = (
+            request.blueprint == 'auth' or 
+            request.path.startswith('/api/login') or
+            request.path.startswith('/api/register') or
+            request.path == '/' or
+            request.path == '/rooms/status' or
+            request.path == '/api/debug/tenant'
+        )
+        
+        if is_public:
+            return
+            
+        # 4. Load tenant from token
+        load_tenant_from_token()
+        
+        # 5. Fail-safe: Block if context is missing for protected routes
+        has_context = getattr(g, 'college_id', None) is not None
+        is_super = getattr(g, 'is_super_admin', False)
+
+        if not has_context and not is_super:
+            print(f"🚨 [BLOCK] No college_id for protected route {request.path} (Blueprint: {request.blueprint})")
+            print(f"   Headers: {dict(request.headers)}")
+            abort(403, description="College context required. Please log in.")
 
     # ── Static file serving for notification attachments ──
     from flask import send_from_directory
@@ -150,14 +191,6 @@ def create_app(config_name=None):
             "status": "running",
             "version": "2.0 - Modular Architecture",
             "features": [
-                "User Authentication (JWT)",
-                "Role-based Access (Teacher/Student/Admin)",
-                "Room Occupancy Tracking",
-                "Section-based Timetables",
-                "Personalized Views",
-                "CSV Upload Support",
-                "Leave Request System",
-                "Class Swap Requests",
                 "AI Chat Assistant",
                 "Email Notifications",
                 "Faculty Workload Management",
@@ -176,8 +209,15 @@ def create_app(config_name=None):
         db.session.rollback()
         print("!!! INTERNAL SERVER ERROR 500 !!!")
         print(traceback.format_exc())
-        response = jsonify({"error": "Internal server error", "message": str(error)})
+        response = jsonify({
+            "error": "Internal server error", 
+            "message": str(error),
+            "traceback": traceback.format_exc() if app.debug else None
+        })
+        # Explicit CORS headers for error responses
         response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH")
         return response, 500
 
     @app.errorhandler(404)
@@ -191,6 +231,9 @@ def create_app(config_name=None):
         response = jsonify({"error": "Bad request"})
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 400
+
+    # ✅ CRITICAL: Setup tenant filtering
+    setup_tenant_filtering(app, db)
 
     return app
 

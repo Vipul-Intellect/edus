@@ -6,12 +6,14 @@ import ApiService from '../../services/api';
 import './login.css';
 
 const QUICK_LOGINS = [
-  { role: 'admin',   label: 'Admin',   icon: '🛡️', username: 'admin',   password: 'Admin@123', cls: 'admin'   },
-  { role: 'teacher', label: 'Teacher', icon: '📚', username: 'teacher1', password: 'Teacher@123', cls: 'teacher' },
-  { role: 'student', label: 'Student', icon: '🎓', username: 'student1', password: 'Student@123', cls: 'student' },
+  { role: 'admin',   label: 'Admin',   icon: '🛡️', college_code: 'DEFAULT', username: 'admin',   password: 'Admin@123', cls: 'admin'   },
+  { role: 'teacher', label: 'Teacher', icon: '📚', college_code: 'DEFAULT', username: 'teacher1', password: 'Teacher@123', cls: 'teacher' },
+  { role: 'student', label: 'Student', icon: '🎓', college_code: 'DEFAULT', username: 'student1', password: 'Student@123', cls: 'student' },
+  { role: 'superadmin', label: 'Super',  icon: '🌍', college_code: 'DEFAULT', username: 'superadmin', password: 'Super@123', cls: 'admin' },
 ];
 
 const LoginPage = () => {
+  const [collegeCode, setCollegeCode] = useState('DEFAULT');
   const [username, setUsername]     = useState('');
   const [password, setPassword]     = useState('');
   const [userType, setUserType]     = useState('student');
@@ -20,21 +22,12 @@ const LoginPage = () => {
   const [isLoading, setIsLoading]   = useState(false);
   const navigate = useNavigate();
 
-  const doLogin = async (uname, pass, type) => {
+  const doLogin = async (c_code, uname, pass, type) => {
     setIsLoading(true);
     setError('');
     try {
-      // Try admin endpoint first if toggle = admin, otherwise use standard login
-      let response;
-      if (type === 'admin') {
-        response = await ApiService.adminLogin(uname, pass);
-        // Fallback: if adminLogin fails, try regular login too
-        if (!response?.token) {
-          response = await ApiService.login(uname, pass);
-        }
-      } else {
-        response = await ApiService.login(uname, pass);
-      }
+      // All logins now go to the same multi-tenant endpoint
+      const response = await ApiService.login(c_code, uname, pass);
 
       if (response?.token) {
         const { role } = response;
@@ -43,6 +36,7 @@ const LoginPage = () => {
           case 'admin':   navigate('/admin');   break;
           case 'teacher': navigate('/teacher'); break;
           case 'student': navigate('/student'); break;
+          case 'superadmin': navigate('/super-admin'); break;
           default:        navigate('/');
         }
       } else {
@@ -62,14 +56,15 @@ const LoginPage = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    doLogin(username, password, userType);
+    doLogin(collegeCode, username, password, userType);
   };
 
   const handleQuickLogin = (ql) => {
+    setCollegeCode(ql.college_code);
     setUserType(ql.role);
     setUsername(ql.username);
     setPassword(ql.password);
-    doLogin(ql.username, ql.password, ql.role);
+    doLogin(ql.college_code, ql.username, ql.password, ql.role);
   };
 
   return (
@@ -105,6 +100,21 @@ const LoginPage = () => {
         </div>
 
         <form onSubmit={handleLogin} className="login-form">
+          <div className="input-group">
+            <label htmlFor="collegeCode">College Code</label>
+            <input
+              id="collegeCode"
+              type="text"
+              value={collegeCode}
+              onChange={(e) => setCollegeCode(e.target.value.toUpperCase())}
+              required
+              placeholder="e.g. DEFAULT, IITB, NITK"
+              className="login-input"
+              disabled={isLoading}
+              autoComplete="organization"
+            />
+          </div>
+
           <div className="input-group">
             <label htmlFor="username">Username</label>
             <input

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Authentication routes
 """
 
@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify, make_response
 from datetime import datetime, timedelta
 import jwt
 from extensions import db
-from models import User
+from models import User, College
 from utils.decorators import token_required
 
 auth_bp = Blueprint('auth', __name__)
@@ -19,20 +19,31 @@ def register():
     data = request.json
     username = data.get("username")
     password = data.get("password")
+    email = data.get("email")
     role = data.get("role")
+    college_code = data.get("college_code")  # Required for multi-tenancy
     dept_id = data.get("dept_id")
     year = data.get("year")
-    email = data.get("email")
+
+    if not college_code:
+        return jsonify({"error": "College code required"}), 400
+    
+    college = College.query.filter_by(college_code=college_code.upper()).first()
+    if not college:
+        return jsonify({"error": "Invalid college code"}), 404
 
     if not username or not password or not email or role not in ["student", "teacher", "admin"]:
         return jsonify({"error": "Invalid data (email is required)"}), 400
-    if User.query.filter_by(username=username).first():
-        return jsonify({"error": "Username exists"}), 400
-    if User.query.filter_by(email=email).first():
-        return jsonify({"error": "Email already registered"}), 400
+    
+    if User.query.filter_by(username=username, college_id=college.id).first():
+        return jsonify({"error": "Username exists in this college"}), 400
+    
+    if User.query.filter_by(email=email, college_id=college.id).first():
+        return jsonify({"error": "Email already registered in this college"}), 400
 
     user_data = {
         "username": username,
+        "college_id": college.id,
         "role": role,
         "dept_id": dept_id,
         "year": year,
@@ -48,77 +59,240 @@ def register():
 
 @auth_bp.route("/login", methods=["GET", "POST", "OPTIONS"])
 def login():
+    """
+    Login with college code (IITB, admin, password)
+    """
     # Flask-CORS handles OPTIONS preflight automatically
     if request.method == "OPTIONS":
         return make_response(), 200
 
     try:
         if request.method != "POST":
-            return jsonify({"message": "Use POST with JSON: username, password"}), 200
-        data = request.json
+            return jsonify({"message": "Use POST with JSON: college_code, username, password"}), 200
+        
+        data = request.json or {}
+        college_code = data.get("college_code")
         username = data.get("username")
         password = data.get("password")
         
-        user = User.query.filter_by(username=username, is_active=True).first()
-        if user and user.check_password(password):
-            from flask import current_app
-            token = jwt.encode({
-                "user_id": user.id,
-                "exp": datetime.utcnow() + timedelta(hours=8)
-            }, current_app.config["SECRET_KEY"], algorithm="HS256")
+        if not all([college_code, username, password]):
+            return jsonify({"error": "Missing required fields: college_code, username, password"}), 400
             
-            return jsonify({
-                "token": token,
-                "role": user.role,
-                "user_id": user.id,
-                "full_name": user.full_name,
-                "department": user.department.dept_name if user.department else None
-            }), 200
+        college_code = college_code.upper().strip()
+        username = username.strip()
+
+        print(f"🔐 Login attempt: college={college_code}, username={username}")
         
-        return jsonify({"error": "Invalid credentials"}), 401
+        # Step 1: Find college
+        college = College.query.filter_by(college_code=college_code).first()
+        if not college:
+            print(f"❌ College not found: {college_code}")
+            return jsonify({"error": "Invalid college code"}), 404
+        
+        if not college.is_active:
+            print(f"❌ College inactive: {college_code}")
+            return jsonify({"error": "College account is inactive"}), 403
+        
+        print(f"✅ College found: {college.name} (ID: {college.id})")
+        
+        # Step 2: Find user IN THAT COLLEGE to prevent collisions
+        user = User.query.filter_by(
+            username=username,
+            college_id=college.id,
+            is_active=True
+        ).first()
+        
+        if not user:
+            print(f"❌ User not found: {username} in college {college.id}")
+            return jsonify({"error": "Invalid credentials"}), 401
+            
+        print(f"✅ User found: {user.username} (ID: {user.id}, Role: {user.role})")
+
+        # Step 3: Verify password (with legacy plain-text fallback/migration)
+        from werkzeug.security import check_password_hash, generate_password_hash
+        
+        is_password_correct = False
+        stored_pw = user.password_hash
+        
+        if stored_pw and (stored_pw.startswith('pbkdf2:sha256:') or stored_pw.startswith('scrypt:') or stored_pw.startswith('bcrypt:')):
+            # It's a hash, use standard verification
+            is_password_correct = check_password_hash(stored_pw, password)
+        else:
+            # It's likely plain text (legacy)
+            if stored_pw == password:
+                is_password_correct = True
+                # AUTO-MIGRATE: Upgrade to hash on successful login
+                print(f"🔄 Migrating user {username} to secure password hash...")
+                user.password_hash = generate_password_hash(password)
+                db.session.commit()
+        
+        if not is_password_correct:
+            print(f"❌ Invalid password for {username}")
+            return jsonify({"error": "Invalid credentials"}), 401
+        
+        print(f"✅ Password verified")
+
+        # Step 4: Generate JWT with college_id
+        from flask import current_app
+        token_payload = {
+            'user_id': user.id,
+            'college_id': college.id,
+            'college_code': college.college_code,
+            'username': user.username,
+            'role': user.role,
+            'exp': datetime.utcnow() + timedelta(hours=24)
+        }
+        
+        token = jwt.encode(
+            token_payload,
+            current_app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+        
+        print(f"✅ JWT generated with college_id={college.id}")
+        
+        # Step 5: Return user data with college info
+        response_data = {
+            'token': token,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'role': user.role,
+                'name': user.full_name,
+                'college': {
+                    'id': college.id,
+                    'name': college.name,
+                    'code': college.college_code,
+                    'features': college.feature_flags or {}
+                }
+            },
+            'role': user.role, # Keep legacy fields for frontend compatibility
+            'user_id': user.id,
+            'full_name': user.full_name,
+            'department': user.department.dept_name if user.department else None
+        }
+        
+        print(f"✅ Login successful for {username}@{college_code}")
+        return jsonify(response_data), 200
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"❌ Login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Authentication failed", "details": str(e)}), 500
 
 
 @auth_bp.route("/admin/login", methods=["GET", "POST", "OPTIONS"])
 def admin_login():
+    """
+    Strict Admin Login with college code
+    """
     # Flask-CORS handles OPTIONS preflight automatically
     if request.method == "OPTIONS":
         return make_response(), 200
 
     try:
         if request.method != "POST":
-            return jsonify({"message": "Use POST with JSON: username, password (admin credentials)"}), 200
+            return jsonify({"message": "Use POST with JSON: college_code, username, password"}), 200
+            
         data = request.json or {}
+        college_code = data.get("college_code")
         username = data.get("username")
         password = data.get("password")
 
-        if not username or not password:
-            return jsonify({"error": "Username and password required"}), 400
+        if not all([college_code, username, password]):
+            return jsonify({"error": "Missing required fields"}), 400
+            
+        college_code = college_code.upper().strip()
+        username = username.strip()
 
-        user = User.query.filter_by(username=username, role="admin", is_active=True).first()
+        print(f"🔐 Admin login attempt: college={college_code}, username={username}")
+        
+        # Step 1: Find college
+        college = College.query.filter_by(college_code=college_code).first()
+        if not college:
+            print(f"❌ College not found: {college_code}")
+            return jsonify({"error": "Invalid college code"}), 404
 
-        if not user or not user.check_password(password):
-            return jsonify({"error": "Invalid admin credentials"}), 401
+        if not college.is_active:
+            print(f"❌ College inactive: {college_code}")
+            return jsonify({"error": "College account is inactive"}), 403
 
+        # Step 2: Find user (Admin or SuperAdmin)
+        from sqlalchemy import or_
+        user = User.query.filter(
+            User.username == username,
+            User.college_id == college.id,
+            User.role.in_(['admin', 'superadmin']),
+            User.is_active == True
+        ).first()
+
+        if not user:
+            print(f"❌ Admin/SuperAdmin user not found: {username} in college {college.id}")
+            return jsonify({"error": "Invalid administrative credentials"}), 401
+
+        # Step 3: Verify password (with legacy plain-text fallback/migration)
+        from werkzeug.security import check_password_hash, generate_password_hash
+        
+        is_password_correct = False
+        stored_pw = user.password_hash
+        
+        if stored_pw and (stored_pw.startswith('pbkdf2:sha256:') or stored_pw.startswith('scrypt:') or stored_pw.startswith('bcrypt:')):
+            is_password_correct = check_password_hash(stored_pw, password)
+        else:
+            if stored_pw == password:
+                is_password_correct = True
+                print(f"🔄 Migrating Admin {username} to secure password hash...")
+                user.password_hash = generate_password_hash(password)
+                db.session.commit()
+        
+        if not is_password_correct:
+            print(f"❌ Invalid password for {username}")
+            return jsonify({"error": "Invalid administrative credentials"}), 401
+
+        print(f"✅ Admin password verified")
+
+        # Step 4: Generate JWT with college_id
         from flask import current_app
+        token_payload = {
+            'user_id': user.id,
+            'college_id': college.id,
+            'college_code': college.college_code,
+            'username': user.username,
+            'role': user.role,
+            'exp': datetime.utcnow() + timedelta(hours=24) # Align to 24h
+        }
+
         token = jwt.encode(
-            {
-                "user_id": user.id,
-                "role": user.role,
-                "exp": datetime.utcnow() + timedelta(hours=8)
-            },
-            current_app.config["SECRET_KEY"],
-            algorithm="HS256"
+            token_payload,
+            current_app.config['SECRET_KEY'],
+            algorithm='HS256'
         )
 
-        return jsonify({
-            "message": "Admin login successful",
-            "token": token,
-            "role": user.role,
-            "user_id": user.id
-        }), 200
+        print(f"✅ Admin JWT generated with college_id={college.id}")
+
+        # Step 5: Return data
+        response_data = {
+            'message': 'Admin login successful',
+            'token': token,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'role': user.role,
+                'college_id': college.id
+            },
+            'role': user.role,
+            'user_id': user.id
+        }
+
+        print(f"✅ Admin login successful for {username}@{college_code}")
+        return jsonify(response_data), 200
+
     except Exception as e:
+        print(f"❌ Admin login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 

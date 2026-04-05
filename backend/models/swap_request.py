@@ -4,6 +4,7 @@ from datetime import datetime
 class SwapRequest(db.Model):
     __tablename__ = 'swap_requests'
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
 
     # Who is making the request (links to the faculty table)
     requesting_faculty_id = db.Column(db.Integer, db.ForeignKey('faculty.faculty_id'), nullable=False)

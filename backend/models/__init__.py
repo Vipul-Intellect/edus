@@ -1,3 +1,4 @@
+from .college import College
 from .user import User
 from .department import Department
 from .faculty import Faculty
@@ -27,7 +28,7 @@ from .calendar_event_map import CalendarEventMap
 from .user_google_auth import UserGoogleAuth
 
 __all__ = [
-    'User', 'Department', 'Faculty', 'Section', 'Course', 'Classroom',
+    'College', 'User', 'Department', 'Faculty', 'Section', 'Course', 'Classroom',
     'RoomOccupancy', 'CourseAllocation', 'Timetable', 'SwapRequest',
     'FacultyUnavailability', 'LeaveRequest', 'ChatbotConversation', 'SystemAnnouncement',
     'Attendance', 'FacultyWorkload', 'Meeting', 'FacultyMeetingParticipation',

@@ -4,6 +4,7 @@ from datetime import datetime
 class ChatbotConversation(db.Model):
     __tablename__ = "chatbot_conversations"
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     query = db.Column(db.Text, nullable=False)
     response = db.Column(db.Text, nullable=False)

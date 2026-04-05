@@ -4,6 +4,7 @@ from datetime import datetime
 class LeaveRequest(db.Model):
     __tablename__ = "leave_requests"
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     leave_type = db.Column(db.String(50), nullable=False)  # sick, vacation, personal, emergency, medical, family
     start_date = db.Column(db.Date, nullable=False)

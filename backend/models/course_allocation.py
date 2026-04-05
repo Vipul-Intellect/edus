@@ -3,6 +3,7 @@ from extensions import db
 class CourseAllocation(db.Model):
     __tablename__ = "course_allocations"
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     dept_id = db.Column(db.Integer, db.ForeignKey("departments.id"))
     year = db.Column(db.Integer, nullable=False)
     semester = db.Column(db.Integer, nullable=False)

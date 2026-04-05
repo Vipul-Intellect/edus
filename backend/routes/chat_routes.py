@@ -8,6 +8,7 @@ from sqlalchemy import or_
 from extensions import db
 from models import ChatbotConversation, SystemAnnouncement
 from utils.decorators import token_required, admin_required
+from utils.tenant_middleware import require_feature
 from utils.chatbot_utils import (
     detect_intent, save_conversation, get_user_timetable_chatbot,
     get_next_class_chatbot, get_free_rooms_chatbot, get_faculty_load_chatbot,
@@ -20,6 +21,7 @@ chat_bp = Blueprint('chat', __name__)
 
 @chat_bp.route("/chatbot", methods=["POST", "OPTIONS"])
 @token_required
+@require_feature('ai_chatbot')
 def chatbot_assistant(current_user):
     # Flask-CORS handles OPTIONS preflight automatically
     if request.method == "OPTIONS":
@@ -149,6 +151,7 @@ def chatbot_assistant(current_user):
 
 @chat_bp.route("/conversation", methods=["GET"])
 @token_required
+@require_feature('ai_chatbot')
 def get_chatbot_history(current_user):
     try:
         conversations = db.session.query(ChatbotConversation).filter_by(user_id=current_user.id)\

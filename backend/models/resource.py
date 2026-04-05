@@ -9,6 +9,7 @@ class Resource(db.Model):
     __tablename__ = "resources"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     name = db.Column(db.String(100), nullable=False)
     resource_type = db.Column(db.String(50), nullable=False)  # 'lab', 'equipment', 'room', 'sports'
     description = db.Column(db.Text, nullable=True)

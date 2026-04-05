@@ -4,6 +4,7 @@ from datetime import datetime
 class SystemAnnouncement(db.Model):
     __tablename__ = "system_announcements"
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     title = db.Column(db.String(200), nullable=False)
     message = db.Column(db.Text, nullable=False)
     priority = db.Column(db.String(20), default="normal")  # low, normal, high, urgent

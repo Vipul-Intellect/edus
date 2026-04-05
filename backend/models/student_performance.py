@@ -7,6 +7,7 @@ class StudentPerformance(db.Model):
     __tablename__ = "student_performance"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey("courses.course_id"), nullable=False)
     

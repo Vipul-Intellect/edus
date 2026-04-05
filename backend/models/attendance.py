@@ -5,6 +5,7 @@ class Attendance(db.Model):
     __tablename__ = "attendance"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey("courses.course_id"), nullable=True)
     timetable_id = db.Column(db.Integer, db.ForeignKey("timetable.timetable_id"), nullable=True)

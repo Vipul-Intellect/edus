@@ -6,6 +6,7 @@ class Meeting(db.Model):
     __tablename__ = "meetings"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     
@@ -55,6 +56,7 @@ class FacultyMeetingParticipation(db.Model):
     __tablename__ = "faculty_meeting_participation"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     faculty_id = db.Column(db.Integer, db.ForeignKey("faculty.faculty_id"), nullable=False)
     meeting_id = db.Column(db.Integer, db.ForeignKey("meetings.id"), nullable=False)
     

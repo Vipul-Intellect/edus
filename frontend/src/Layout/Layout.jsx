@@ -40,6 +40,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navigationItems = [
+  // Super Admin Routes
+  {
+    title: "Platform Dashboard",
+    url: "/super-admin",
+    icon: LayoutDashboard,
+    role: "superadmin",
+  },
   // Shared / Role-specific Dashboards
   {
     title: "Dashboard",
@@ -225,7 +232,7 @@ export default function Layout({ children, onLogout, role }) {
   const visibleItems = navigationItems.filter(item => !item.role || item.role === role);
   
   // Get user details for dropdown
-  const userName = localStorage.getItem('full_name') || localStorage.getItem('username') || (role === 'admin' ? 'Admin User' : 'Student User');
+  const userName = localStorage.getItem('full_name') || localStorage.getItem('username') || (role === 'superadmin' ? 'Platform Admin' : role === 'admin' ? 'Admin User' : 'Student User');
   const userInitials = userName.charAt(0).toUpperCase();
 
   return (

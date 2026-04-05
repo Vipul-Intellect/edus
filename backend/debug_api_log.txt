@@ -1496,3 +1496,127 @@ Found 1 swap requests.
 GET /swap-requests: User=Anju gandhi (ID 18)
 Resolved Faculty ID: 4
 Found 1 swap requests.
+ERROR in teacher_swap_requests: (sqlite3.OperationalError) no such column: faculty.college_id
+[SQL: SELECT faculty.faculty_id AS faculty_faculty_id, faculty.college_id AS faculty_college_id, faculty.faculty_name AS faculty_faculty_name, faculty.max_hours AS faculty_max_hours, faculty.dept_id AS faculty_dept_id, faculty.email AS faculty_email, faculty.subject AS faculty_subject, faculty.weekly_max_hours AS faculty_weekly_max_hours, faculty.preferred_max_teaching_hours AS faculty_preferred_max_teaching_hours, faculty.is_active AS faculty_is_active 
+FROM faculty 
+WHERE faculty.faculty_name = ? AND faculty.dept_id = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('Anju gandhi', 4, 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such column: faculty.college_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\timetable-project\backend\routes\faculty_routes.py", line 105, in teacher_swap_requests
+    faculty = Faculty.query.filter_by(faculty_name=current_user.full_name, dept_id=current_user.dept_id).first()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\query.py", line 2759, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: faculty.college_id
+[SQL: SELECT faculty.faculty_id AS faculty_faculty_id, faculty.college_id AS faculty_college_id, faculty.faculty_name AS faculty_faculty_name, faculty.max_hours AS faculty_max_hours, faculty.dept_id AS faculty_dept_id, faculty.email AS faculty_email, faculty.subject AS faculty_subject, faculty.weekly_max_hours AS faculty_weekly_max_hours, faculty.preferred_max_teaching_hours AS faculty_preferred_max_teaching_hours, faculty.is_active AS faculty_is_active 
+FROM faculty 
+WHERE faculty.faculty_name = ? AND faculty.dept_id = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('Anju gandhi', 4, 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+ERROR in teacher_swap_requests: (sqlite3.OperationalError) no such column: faculty.college_id
+[SQL: SELECT faculty.faculty_id AS faculty_faculty_id, faculty.college_id AS faculty_college_id, faculty.faculty_name AS faculty_faculty_name, faculty.max_hours AS faculty_max_hours, faculty.dept_id AS faculty_dept_id, faculty.email AS faculty_email, faculty.subject AS faculty_subject, faculty.weekly_max_hours AS faculty_weekly_max_hours, faculty.preferred_max_teaching_hours AS faculty_preferred_max_teaching_hours, faculty.is_active AS faculty_is_active 
+FROM faculty 
+WHERE faculty.faculty_name = ? AND faculty.dept_id = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('Anju gandhi', 4, 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such column: faculty.college_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\timetable-project\backend\routes\faculty_routes.py", line 105, in teacher_swap_requests
+    faculty = Faculty.query.filter_by(faculty_name=current_user.full_name, dept_id=current_user.dept_id).first()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\query.py", line 2759, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\yasha\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: faculty.college_id
+[SQL: SELECT faculty.faculty_id AS faculty_faculty_id, faculty.college_id AS faculty_college_id, faculty.faculty_name AS faculty_faculty_name, faculty.max_hours AS faculty_max_hours, faculty.dept_id AS faculty_dept_id, faculty.email AS faculty_email, faculty.subject AS faculty_subject, faculty.weekly_max_hours AS faculty_weekly_max_hours, faculty.preferred_max_teaching_hours AS faculty_preferred_max_teaching_hours, faculty.is_active AS faculty_is_active 
+FROM faculty 
+WHERE faculty.faculty_name = ? AND faculty.dept_id = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('Anju gandhi', 4, 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)

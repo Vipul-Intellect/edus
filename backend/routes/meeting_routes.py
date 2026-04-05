@@ -9,12 +9,14 @@ from models.section import Section
 from models import UserGoogleAuth
 from routes.notification_routes import create_notification
 from utils.decorators import token_required
+from utils.tenant_middleware import require_feature
 from services.google_calendar_service import create_google_event_with_meet
 
 meeting_bp = Blueprint('meeting', __name__)
 
 @meeting_bp.route('/meetings/create', methods=['POST', 'OPTIONS'])
 @token_required
+@require_feature('meetings')
 def create_meeting(current_user):
     """
     Teacher/Admin creates a meeting.
@@ -165,6 +167,7 @@ def create_meeting(current_user):
 
 @meeting_bp.route('/meetings', methods=['GET', 'OPTIONS'])
 @token_required
+@require_feature('meetings')
 def get_meetings(current_user):
     """
     Get relevant active/future meetings for the current user to display the Join card.

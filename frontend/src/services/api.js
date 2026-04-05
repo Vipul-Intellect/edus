@@ -67,6 +67,14 @@ class ApiService {
       // Handle error status codes
       if (!response.ok) {
         if (response.status === 403) {
+          const isContextError = responseData.error?.includes('College context') || 
+                                 responseData.message?.includes('College context');
+          
+          if (isContextError) {
+            console.warn("🛡️ Stale tenant context detected. Clearing local storage and logging out.");
+            this.logout();
+            return null;
+          }
           throw new Error(responseData.error || responseData.message || 'Access forbidden - insufficient permissions');
         }
 
@@ -106,10 +114,10 @@ class ApiService {
 
   // ==================== AUTHENTICATION ====================
 
-  async login(username, password) {
+  async login(college_code, username, password) {
     const response = await this.makeRequest('/api/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ college_code, username, password })
     });
 
     if (response && response.token) {
@@ -124,10 +132,10 @@ class ApiService {
     return response;
   }
 
-  async adminLogin(username, password) {
-    const response = await this.makeRequest('/api/admin/login', {
+  async adminLogin(college_code, username, password) {
+    const response = await this.makeRequest('/api/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ college_code, username, password })
     });
 
     if (response && response.token) {
@@ -152,6 +160,30 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(userData)
     });
+  }
+
+  // ==================== SUPER ADMIN ====================
+
+  async fetchColleges() {
+    return this.makeRequest('/api/super/colleges');
+  }
+
+  async createCollege(collegeData) {
+    return this.makeRequest('/api/super/colleges', {
+      method: 'POST',
+      body: JSON.stringify(collegeData)
+    });
+  }
+
+  async updateCollege(collegeId, updateData) {
+    return this.makeRequest(`/api/super/colleges/${collegeId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updateData)
+    });
+  }
+
+  async getPlatformStats() {
+    return this.makeRequest('/api/super/stats');
   }
 
   logout() {

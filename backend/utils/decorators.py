@@ -1,7 +1,9 @@
 from functools import wraps
-from flask import request, jsonify, make_response, current_app
+from flask import request, jsonify, make_response, current_app, g
 import jwt
 from models.user import User
+from models.college import College
+from utils.tenant_middleware import TenantContext
 
 def _extract_token_from_request():
     # Prefer standard Authorization: Bearer <token>
@@ -20,27 +22,29 @@ def _extract_token_from_request():
     return x_token
 
 def token_required(f):
+    """Decorator to ensure user is authenticated and tenant context is set"""
     @wraps(f)
     def decorated(*args, **kwargs):
-        # Allow OPTIONS requests for CORS preflight without authentication
-        # Flask-CORS (via @cross_origin or global config with automatic_options=True) will handle OPTIONS
+        # Allow OPTIONS requests for CORS preflight
         if request.method == "OPTIONS":
-            # Return empty response - @cross_origin decorator will add CORS headers
-            # The @cross_origin decorator wraps this function and will process the response
-            response = make_response()
-            response.status_code = 200
-            return response
+            return make_response(), 200
 
-        token = _extract_token_from_request()
-        if not token:
-            return jsonify({"error": "Token missing"}), 401
-        try:
-            data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-            current_user = User.query.get(data["user_id"])
-            if not current_user or not current_user.is_active:
-                return jsonify({"error": "Invalid token"}), 401
-        except Exception as e:
-            return jsonify({"error": "Token invalid", "details": str(e)}), 401
+        # 1. Check if tenant context was set by before_request
+        # We rely on g.user_id and g.college_id which were set in load_tenant_from_token
+        user_id = getattr(g, 'user_id', None)
+        college_id = getattr(g, 'college_id', None)
+
+        if not user_id:
+            return jsonify({"error": "Authentication required. Token missing or invalid."}), 401
+        
+        if not college_id and not getattr(g, 'is_super_admin', False):
+            return jsonify({"error": "No college context found. Please log in again."}), 403
+        
+        # 2. Get User object for the route handler
+        current_user = User.query.get(user_id)
+        if not current_user or not current_user.is_active:
+            return jsonify({"error": "User no longer active"}), 401
+            
         return f(current_user, *args, **kwargs)
     return decorated
 
@@ -55,7 +59,7 @@ def admin_required(f):
             response.status_code = 200
             return response
 
-        if current_user.role != "admin":
+        if current_user.role not in ["admin", "superadmin"]:
             return jsonify({"error": "Admin only"}), 403
         return f(current_user, *args, **kwargs)
     return wrapper
@@ -68,7 +72,7 @@ def teacher_required(f):
             response.status_code = 200
             return response
 
-        if current_user.role not in ["teacher", "admin"]:
+        if current_user.role not in ["teacher", "admin", "superadmin"]:
             return jsonify({"error": "Teacher or admin only"}), 403
         return f(current_user, *args, **kwargs)
     return wrapper

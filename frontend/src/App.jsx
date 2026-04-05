@@ -12,6 +12,7 @@ import Sections from './pages/Sections/Sections';
 import Rooms from './pages/rooms/Rooms';
 import Timetable from './pages/Timetable/timetable';
 import RegisterUser from './pages/Admin/RegisterUser';
+import SuperAdminDashboard from './pages/Admin/SuperAdminDashboard';
 import MarkAttendance from './pages/Teachers/MarkAttendance';
 import StudentAttendance from './pages/Students/StudentAttendance';
 import Layout from './Layout/Layout';
@@ -84,8 +85,20 @@ function AppRoutes() {
         path="/login"
         element={
           isAuthenticated ?
-            <Navigate to={`/${userRole}`} replace /> :
+            <Navigate to={userRole === 'superadmin' ? '/super-admin' : `/${userRole}`} replace /> :
             <LoginPage />
+        }
+      />
+
+      {/* Super Admin Routes */}
+      <Route
+        path="/super-admin"
+        element={
+          isAuthenticated && userRole === 'superadmin' ?
+            <Layout onLogout={handleLogout} role={userRole}>
+              <SuperAdminDashboard />
+            </Layout> :
+            <Navigate to="/login" replace />
         }
       />
 
@@ -276,7 +289,7 @@ function AppRoutes() {
         path="/"
         element={
           isAuthenticated ?
-            <Navigate to={`/${userRole}`} replace /> :
+            <Navigate to={userRole === 'superadmin' ? '/super-admin' : `/${userRole}`} replace /> :
             <Navigate to="/login" replace />
         }
       />
@@ -284,7 +297,7 @@ function AppRoutes() {
       {/* Catch all other routes */}
       <Route
         path="*"
-        element={<Navigate to={isAuthenticated ? `/${userRole}` : "/login"} replace />}
+        element={<Navigate to={isAuthenticated ? (userRole === 'superadmin' ? '/super-admin' : `/${userRole}`) : "/login"} replace />}
       />
     </Routes>
   );

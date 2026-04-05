@@ -6,6 +6,7 @@ class FacultyWorkload(db.Model):
     __tablename__ = "faculty_workload"
     
     id = db.Column(db.Integer, primary_key=True)
+    college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     faculty_id = db.Column(db.Integer, db.ForeignKey("faculty.faculty_id"), nullable=False)
     week_number = db.Column(db.Integer, nullable=False)  # ISO week number (1-53)
     year = db.Column(db.Integer, nullable=False)

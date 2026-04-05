@@ -36,20 +36,25 @@ class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
     # Production database - use DATABASE_URL from environment
-    # Handle both postgres:// and postgresql:// schemes (Heroku uses postgres://)
     database_url = os.environ.get("DATABASE_URL")
     
     if not database_url:
-        # Fallback to sqlite if DATABASE_URL is missing
         SQLALCHEMY_DATABASE_URI = "sqlite:///timetable_enhanced_prod.db"
     else:
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         SQLALCHEMY_DATABASE_URI = database_url
 
+class TestingConfig(Config):
+    """Testing configuration"""
+    TESTING = True
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+
 # Configuration mapping
 config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
+    'testing': TestingConfig,
     'default': DevelopmentConfig
 }
