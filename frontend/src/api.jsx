@@ -535,7 +535,7 @@ class ApiService {
   // ==================== CHATBOT / AI ASSISTANT ====================
 
   async sendChatMessage(message) {
-    return this.makeRequest('/api/chatbot', {
+    return this.makeRequest('/api/chat/chatbot', {
       method: 'POST',
       body: JSON.stringify({ message })
     });

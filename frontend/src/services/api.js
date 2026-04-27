@@ -788,18 +788,18 @@ class ApiService {
   // ==================== CHATBOT / AI ASSISTANT ====================
 
   async sendChatMessage(message) {
-    return this.makeRequest('/api/chatbot', {
+    return this.makeRequest('/api/chat/chatbot', {
       method: 'POST',
       body: JSON.stringify({ message })
     });
   }
 
   async getChatHistory() {
-    return this.makeRequest('/api/conversation');
+    return this.makeRequest('/api/chat/conversation');
   }
 
   async clearChatHistory() {
-    return this.makeRequest('/api/clear', {
+    return this.makeRequest('/api/chat/clear', {
       method: 'POST'
     });
   }
