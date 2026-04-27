@@ -18,6 +18,22 @@ from models import *
 from utils.tenant_middleware import load_tenant_from_token
 from utils.query_filter import setup_tenant_filtering
 
+def _ensure_schema_compatibility():
+    """Apply tiny safe schema fixes needed by existing production databases."""
+    try:
+        from sqlalchemy import text
+
+        if db.engine.dialect.name == "postgresql":
+            db.session.execute(text(
+                "ALTER TABLE users ALTER COLUMN password_hash TYPE VARCHAR(255)"
+            ))
+            db.session.commit()
+            print("[Schema] Ensured users.password_hash can store modern password hashes.")
+    except Exception as e:
+        print(f"[Schema] Compatibility check failed: {e}")
+        db.session.rollback()
+
+
 def _seed_admin():
     """Create default college and admin on first startup if needed."""
     try:
@@ -82,6 +98,7 @@ def create_app(config_name=None):
             _os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
 
             db.create_all()
+            _ensure_schema_compatibility()
             _seed_admin()
         except Exception as e:
             print("=" * 60)

@@ -6,7 +6,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     college_id = db.Column(db.Integer, db.ForeignKey("colleges.id"), nullable=False, index=True)
     username = db.Column(db.String(80), nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    # Werkzeug's current default scrypt hashes are longer than 128 chars.
+    password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # "teacher", "student", or "admin"
     full_name = db.Column(db.String(100), nullable=True)
     email = db.Column(db.String(100), nullable=True)
