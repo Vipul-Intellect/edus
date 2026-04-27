@@ -316,7 +316,7 @@ export default function Rooms() {
           isOpen={showBulkModal}
           onClose={() => setShowBulkModal(false)}
           title="Bulk Import Rooms"
-          endpoint="/upload/rooms"
+          endpoint="/api/upload/rooms"
           templateInfo="name, capacity, [resources]"
           onSuccess={() => loadRooms()}
         />

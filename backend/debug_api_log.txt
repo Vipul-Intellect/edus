@@ -1620,3 +1620,93 @@ WHERE faculty.faculty_name = ? AND faculty.dept_id = ?
  LIMIT ? OFFSET ?]
 [parameters: ('Anju gandhi', 4, 1, 0)]
 (Background on this error at: https://sqlalche.me/e/20/e3q8)
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 15
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 15
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 15
+Found 0 swap requests.
+GET /swap-requests: User=pooja (ID 8)
+Resolved Faculty ID: 15
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 1 swap requests.
+GET /swap-requests: User=geeta verma (ID 22)
+Resolved Faculty ID: 8
+Found 0 swap requests.
+GET /swap-requests: User=geeta verma (ID 22)
+Resolved Faculty ID: 8
+Found 0 swap requests.
+GET /swap-requests: User=geeta verma (ID 22)
+Resolved Faculty ID: 8
+Found 0 swap requests.
+GET /swap-requests: User=geeta verma (ID 22)
+Resolved Faculty ID: 8
+Found 0 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 1 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 1 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 1 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 1 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.

@@ -109,7 +109,7 @@ class ApiService {
   }
 
   async getMyLeaveRequests() {
-    return this.makeRequest('/leave/my-requests');
+    return this.makeRequest('/api/leave/my-requests');
   }
 
   // ==================== AUTHENTICATION ====================
@@ -294,6 +294,18 @@ class ApiService {
     return this.makeRequest('/admin/generate_timetable', {
       method: 'POST'
     });
+  }
+
+  async getTeacherTimetable() {
+    return this.makeRequest('/teacher/timetable');
+  }
+
+  async getStudentTimetable() {
+    return this.makeRequest('/student/timetable');
+  }
+
+  async getStudentProfile() {
+    return this.makeRequest('/student/profile');
   }
 
   async getTimetable(filters = {}) {
@@ -612,31 +624,31 @@ class ApiService {
   // ==================== LEAVE REQUESTS (All Users) ====================
 
   async submitLeaveRequest(leaveData) {
-    return this.makeRequest('/leave/request', {
+    return this.makeRequest('/api/leave/request', {
       method: 'POST',
       body: JSON.stringify(leaveData)
     });
   }
 
   async getMyLeaveRequests(status = null) {
-    let url = '/leave/my-requests';
+    let url = '/api/leave/my-requests';
     if (status) url += `?status=${status}`;
     return this.makeRequest(url);
   }
 
   async getLeaveRequestDetails(requestId) {
-    return this.makeRequest(`/leave/request/${requestId}`);
+    return this.makeRequest(`/api/leave/request/${requestId}`);
   }
 
   async updateLeaveRequest(requestId, leaveData) {
-    return this.makeRequest(`/leave/request/${requestId}`, {
+    return this.makeRequest(`/api/leave/request/${requestId}`, {
       method: 'PUT',
       body: JSON.stringify(leaveData)
     });
   }
 
   async cancelLeaveRequest(requestId) {
-    return this.makeRequest(`/leave/request/${requestId}`, {
+    return this.makeRequest(`/api/leave/request/${requestId}`, {
       method: 'DELETE'
     });
   }
@@ -733,7 +745,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.makeRequest('/upload/departments', {
+    return this.makeRequest('/api/upload/departments', {
       method: 'POST',
       body: formData,
       headers: {} // Let browser set content-type
@@ -744,7 +756,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.makeRequest('/upload/faculty', {
+    return this.makeRequest('/api/upload/faculty', {
       method: 'POST',
       body: formData,
       headers: {}
@@ -755,7 +767,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.makeRequest('/upload/sections', {
+    return this.makeRequest('/api/upload/sections', {
       method: 'POST',
       body: formData,
       headers: {}
@@ -766,7 +778,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.makeRequest('/upload/students', {
+    return this.makeRequest('/api/upload/students', {
       method: 'POST',
       body: formData,
       headers: {}
@@ -1137,7 +1149,8 @@ class ApiService {
      * @param {FormData} formData - FormData containing the 'file' field
      */
     async bulkImport(endpoint, formData) {
-        return this.makeRequest(`/api${endpoint}`, {
+        const url = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
+        return this.makeRequest(url, {
             method: 'POST',
             body: formData,
         });

@@ -108,7 +108,8 @@ def teacher_timetable(current_user):
             faculty = Faculty(
                 faculty_name=current_user.full_name,
                 max_hours=12,
-                dept_id=current_user.dept_id
+                dept_id=current_user.dept_id,
+                college_id=current_user.college_id  # Required for multi-tenant isolation
             )
             db.session.add(faculty)
             db.session.commit()

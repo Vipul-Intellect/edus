@@ -22,6 +22,7 @@ export default function UserManagement() {
     const [uploadType, setUploadType] = useState("student");
     const [uploadFile, setUploadFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadResult, setUploadResult] = useState(null);
 
     // Edit modal state
     const [editingUser, setEditingUser] = useState(null);
@@ -153,21 +154,26 @@ export default function UserManagement() {
         if (!uploadFile) { alert("Please select a file first"); return; }
         try {
             setIsUploading(true);
+            setUploadResult(null);
             let response;
             if (uploadType === "student") {
                 response = await ApiService.uploadStudents(uploadFile);
             } else {
                 response = await ApiService.uploadFaculty(uploadFile);
             }
-            alert(response.message || "Upload successful!");
-            setIsUploadModalOpen(false);
-            setUploadFile(null);
+            setUploadResult(response);
             fetchUsers();
         } catch (error) {
             alert(error.message || "Upload failed");
         } finally {
             setIsUploading(false);
         }
+    };
+
+    const handleCloseUploadModal = () => {
+        setIsUploadModalOpen(false);
+        setUploadFile(null);
+        setUploadResult(null);
     };
 
     if (isLoading) {
@@ -209,40 +215,89 @@ export default function UserManagement() {
             <CardContent>
 
                 {/* ===== UPLOAD MODAL ===== */}
-                <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-                    <DialogContent>
+                <Dialog open={isUploadModalOpen} onOpenChange={handleCloseUploadModal}>
+                    <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
                             <DialogTitle>Bulk Import Users</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleFileUpload} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>User Type</Label>
-                                <Select value={uploadType} onValueChange={setUploadType}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="student">Students</SelectItem>
-                                        <SelectItem value="teacher">Teachers</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>CSV File</Label>
-                                <Input type="file" accept=".csv" onChange={(e) => setUploadFile(e.target.files[0])} />
-                                <p className="text-xs text-muted-foreground">
-                                    {uploadType === "student"
-                                        ? "Required columns: username, password, dept_name, year, section_name"
-                                        : "Required columns: faculty_name, dept_name, username, password, email, max_hours"}
-                                </p>
-                            </div>
+                            {!uploadResult ? (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label>User Type</Label>
+                                        <Select value={uploadType} onValueChange={setUploadType}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="student">Students</SelectItem>
+                                                <SelectItem value="teacher">Teachers</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>File (CSV or Excel)</Label>
+                                        <Input type="file" accept=".csv,.xlsx,.xls" onChange={(e) => setUploadFile(e.target.files[0])} />
+                                        <p className="text-xs text-muted-foreground">
+                                            {uploadType === "student" ? (
+                                                <>
+                                                    <span className="font-medium text-gray-700">Required:</span>{" "}
+                                                    username, password, dept_name, year, section_name
+                                                    <br />
+                                                    <span className="font-medium text-gray-700">Optional:</span>{" "}
+                                                    full_name, email
+                                                    <br />
+                                                    <span className="text-gray-400">Supports .csv, .xlsx, .xls</span>
+                                                </>
+                                            ) : (
+                                                <><span className="font-medium text-gray-700">Required:</span> faculty_name, dept_name, username, password, email, max_hours<br /><span className="text-gray-400">Supports .csv, .xlsx, .xls</span></>
+                                            )}
+                                        </p>
+                                    </div>
+                                </>
+                            ) : (
+                                /* ── Result panel ── */
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-200">
+                                            ✓ {uploadResult.added ?? 0} added
+                                        </span>
+                                        {(uploadResult.skipped ?? 0) > 0 && (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                                ⚠ {uploadResult.skipped} skipped
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {uploadResult.skip_reasons?.length > 0 && (
+                                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                            <p className="text-xs font-semibold text-amber-800 mb-1.5">Skip reasons (fix these in your file):</p>
+                                            <ul className="space-y-0.5 max-h-48 overflow-y-auto">
+                                                {uploadResult.skip_reasons.map((r, i) => (
+                                                    <li key={i} className="text-xs text-amber-700 font-mono">{r}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    {(uploadResult.skipped ?? 0) === 0 && (
+                                        <p className="text-sm text-green-700">All rows imported successfully!</p>
+                                    )}
+                                </div>
+                            )}
+
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)}>Cancel</Button>
-                                <Button type="submit" disabled={isUploading || !uploadFile}>
-                                    {isUploading ? <><FileUp className="w-4 h-4 mr-2 animate-bounce" />Uploading...</> : <><Upload className="w-4 h-4 mr-2" />Upload</>}
+                                <Button type="button" variant="outline" onClick={handleCloseUploadModal}>
+                                    {uploadResult ? "Done" : "Cancel"}
                                 </Button>
+                                {!uploadResult && (
+                                    <Button type="submit" disabled={isUploading || !uploadFile}>
+                                        {isUploading ? <><FileUp className="w-4 h-4 mr-2 animate-bounce" />Uploading...</> : <><Upload className="w-4 h-4 mr-2" />Upload</>}
+                                    </Button>
+                                )}
                             </DialogFooter>
                         </form>
                     </DialogContent>
                 </Dialog>
+
 
                 {/* ===== EDIT MODAL ===== */}
                 <Dialog open={!!editingUser} onOpenChange={(open) => { if (!open) setEditingUser(null); }}>

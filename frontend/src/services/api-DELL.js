@@ -169,10 +169,10 @@ export const Announcement = {
 };
 
 export const Upload = {
-  departments: (file) => API.post("/upload/departments", createFormData(file)),
-  sections: (file) => API.post("/upload/sections", createFormData(file)),
-  faculty: (file) => API.post("/upload/faculty", createFormData(file)),
-  students: (file) => API.post("/upload/students", createFormData(file)),
+  departments: (file) => API.post("/api/upload/departments", createFormData(file)),
+  sections: (file) => API.post("/api/upload/sections", createFormData(file)),
+  faculty: (file) => API.post("/api/upload/faculty", createFormData(file)),
+  students: (file) => API.post("/api/upload/students", createFormData(file)),
 };
 
 export const Export = {

@@ -179,7 +179,7 @@ export default function Sections() {
                     isOpen={showBulkModal}
                     onClose={() => setShowBulkModal(false)}
                     title="Bulk Import Sections"
-                    endpoint="/upload/sections"
+                    endpoint="/api/upload/sections"
                     templateInfo="name, year, dept_name"
                     onSuccess={() => loadData()}
                 />

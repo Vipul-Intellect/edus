@@ -52,10 +52,17 @@ export default function CourseForm({ course, onSubmit, onCancel }) {
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newState = { ...prev, [field]: value };
+      if (field === 'year') {
+        // Adjust semester to be valid for the new year
+        const validSems = [value * 2 - 1, value * 2];
+        if (!validSems.includes(newState.semester)) {
+          newState.semester = validSems[0];
+        }
+      }
+      return newState;
+    });
   };
 
   return (
@@ -168,8 +175,8 @@ export default function CourseForm({ course, onSubmit, onCancel }) {
                   <SelectValue placeholder="Select semester" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1</SelectItem>
-                  <SelectItem value="2">2</SelectItem>
+                  <SelectItem value={(formData.year * 2 - 1).toString()}>{formData.year * 2 - 1}</SelectItem>
+                  <SelectItem value={(formData.year * 2).toString()}>{formData.year * 2}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

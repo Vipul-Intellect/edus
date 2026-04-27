@@ -1,2 +1,15 @@
 faculty_name,max_hours,dept_name,email,faculty_id
-hema malini,6,arts,hema_malini@gmail.com,13
+yash,12,computer science,yashantil1462@gmail.com,1
+Teacher One,12,,,2
+pooja,12,CSE,yashantil1462@gmail.com,3
+Anju gandhi,5,aiml,educator@email.com,4
+upasana lakhina,5,CSE,educator@email.com,5
+Stuti mehla,5,CSE,educator@email.com,6
+jaya rani,5,CSE,educator@email.com,7
+Geeta Verma,4,CSE,educator@email.com,8
+Preeti nehra,4,CSE,educator@email.com,9
+Yogesh,4,electronics,educator@email.com,10
+mahajan,4,electronics,educator@email.com,11
+pooja,12,CSE,,12
+muninder,12,CSE,,14
+pooja,12,electronics,,15

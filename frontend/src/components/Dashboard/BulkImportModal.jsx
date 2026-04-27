@@ -14,8 +14,11 @@ export default function BulkImportModal({ isOpen, onClose, title, endpoint, temp
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
-            if (selectedFile.type !== 'text/csv' && !selectedFile.name.endsWith('.csv')) {
-                setError("Please upload a valid CSV file.");
+            const name = selectedFile.name.toLowerCase();
+            const validExts = ['.csv', '.xlsx', '.xls'];
+            const isValid = validExts.some(ext => name.endsWith(ext));
+            if (!isValid) {
+                setError("Please upload a valid CSV or Excel file (.csv, .xlsx, .xls).");
                 setFile(null);
                 return;
             }
@@ -55,14 +58,14 @@ export default function BulkImportModal({ isOpen, onClose, title, endpoint, temp
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Upload className="w-5 h-5 text-blue-600" />
                         {title}
                     </DialogTitle>
                     <DialogDescription>
-                        Upload a CSV file to bulk import data into the system.
+                        Upload a CSV or Excel file to bulk import data into the system.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -88,7 +91,7 @@ export default function BulkImportModal({ isOpen, onClose, title, endpoint, temp
                             type="file" 
                             className="hidden" 
                             ref={fileInputRef}
-                            accept=".csv"
+                            accept=".csv,.xlsx,.xls"
                             onChange={handleFileChange}
                         />
                         
@@ -108,8 +111,8 @@ export default function BulkImportModal({ isOpen, onClose, title, endpoint, temp
                         ) : (
                             <div className="space-y-2">
                                 <Upload className="w-10 h-10 text-gray-300 mx-auto" />
-                                <p className="text-sm font-medium text-gray-700">Click to upload CSV</p>
-                                <p className="text-xs text-gray-500">Max size: 5MB</p>
+                                <p className="text-sm font-medium text-gray-700">Click to upload CSV or Excel</p>
+                                <p className="text-xs text-gray-500">.csv / .xlsx / .xls &nbsp;|&nbsp; Max size: 5MB</p>
                             </div>
                         )}
                     </div>

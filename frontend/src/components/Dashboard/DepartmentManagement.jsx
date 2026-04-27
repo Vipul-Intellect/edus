@@ -180,7 +180,7 @@ export default function DepartmentManagement() {
                     isOpen={isBulkModalOpen}
                     onClose={() => setIsBulkModalOpen(false)}
                     title="Bulk Import Departments"
-                    endpoint="/upload/departments"
+                    endpoint="/api/upload/departments"
                     templateInfo="dept_name"
                     onSuccess={() => fetchDepartments()}
                 />

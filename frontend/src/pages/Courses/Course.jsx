@@ -262,7 +262,7 @@ export default function Courses() {
           isOpen={showBulkModal}
           onClose={() => setShowBulkModal(false)}
           title="Bulk Import Courses"
-          endpoint="/upload/courses"
+          endpoint="/api/upload/courses"
           templateInfo="name, type, credits, year, semester, dept_name, hours_per_week, [faculty_name]"
           onSuccess={() => loadData()}
         />

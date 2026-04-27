@@ -492,7 +492,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.makeRequest('/upload/departments', {
+    return this.makeRequest('/api/upload/departments', {
       method: 'POST',
       body: formData,
       headers: {}
@@ -503,7 +503,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.makeRequest('/upload/faculty', {
+    return this.makeRequest('/api/upload/faculty', {
       method: 'POST',
       body: formData,
       headers: {}
@@ -514,7 +514,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.makeRequest('/upload/sections', {
+    return this.makeRequest('/api/upload/sections', {
       method: 'POST',
       body: formData,
       headers: {}
@@ -525,7 +525,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.makeRequest('/upload/students', {
+    return this.makeRequest('/api/upload/students', {
       method: 'POST',
       body: formData,
       headers: {}

@@ -1,5 +1,5 @@
 """
-CSV upload routes
+CSV / Excel upload routes
 """
 
 import pandas as pd
@@ -12,6 +12,33 @@ from utils.export_utils import export_csvs
 upload_bp = Blueprint('upload', __name__)
 
 
+def _safe_str(val):
+    """Convert a cell value to a clean string.
+    Handles Excel's habit of storing integers as floats (e.g. password 123456 → '123456.0').
+    """
+    if pd.isna(val):
+        return ""
+    # If the float is a whole number, strip the decimal part
+    if isinstance(val, float) and val == int(val):
+        return str(int(val)).strip()
+    return str(val).strip()
+
+
+def read_file(file):
+    """Read an uploaded file into a DataFrame.
+    Supports .csv, .xlsx and .xls. Column names are stripped of whitespace.
+    """
+    filename = file.filename.lower()
+    if filename.endswith('.xlsx') or filename.endswith('.xls'):
+        df = pd.read_excel(file, engine='openpyxl' if filename.endswith('.xlsx') else 'xlrd',
+                           dtype=str)   # read everything as string to avoid numeric coercion
+    else:
+        df = pd.read_csv(file, dtype=str)
+    # Strip whitespace from column names (common Excel issue)
+    df.columns = [c.strip() for c in df.columns]
+    return df
+
+
 @upload_bp.route("/faculty", methods=["POST", "OPTIONS"])
 @token_required
 @admin_required
@@ -20,7 +47,7 @@ def upload_faculty(current_user):
         file = request.files.get("file")
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
-        df = pd.read_csv(file)
+        df = read_file(file)
         required_cols = ['faculty_name', 'dept_name', 'username', 'password', 'email', 'max_hours']
         missing_cols = [c for c in required_cols if c not in df.columns]
         if missing_cols:
@@ -86,39 +113,96 @@ def upload_students(current_user):
         file = request.files.get("file")
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
-        df = pd.read_csv(file)
+        df = read_file(file)
+
         required_cols = ['username', 'password', 'dept_name', 'year', 'section_name']
         missing_cols = [c for c in required_cols if c not in df.columns]
         if missing_cols:
-            return jsonify({"error": f"CSV must contain columns: {', '.join(missing_cols)}"}), 400
+            return jsonify({
+                "error": f"File must contain columns: {', '.join(missing_cols)}",
+                "found_columns": list(df.columns)
+            }), 400
+
         added = 0
-        for _, row in df.iterrows():
-            username = str(row['username']).strip() if pd.notna(row['username']) else ""
-            if not username or User.query.filter_by(username=username).first():
+        skipped = 0
+        skip_reasons = []
+
+        for i, row in df.iterrows():
+            row_num = i + 2  # 1-indexed + header row
+
+            username = _safe_str(row['username'])
+            if not username:
+                skip_reasons.append(f"Row {row_num}: empty username")
+                skipped += 1
                 continue
-            dept = Department.query.filter_by(dept_name=str(row['dept_name']).strip()).first()
+
+            if User.query.filter_by(username=username).first():
+                skip_reasons.append(f"Row {row_num}: username '{username}' already exists")
+                skipped += 1
+                continue
+
+            password = _safe_str(row['password'])
+            if not password:
+                skip_reasons.append(f"Row {row_num}: empty password for '{username}'")
+                skipped += 1
+                continue
+
+            dept_name = _safe_str(row['dept_name'])
+            dept = Department.query.filter_by(dept_name=dept_name).first()
             if not dept:
+                skip_reasons.append(f"Row {row_num}: department '{dept_name}' not found")
+                skipped += 1
                 continue
+
+            # Year — safe int conversion (Excel may store as "1.0")
+            try:
+                year = int(float(_safe_str(row['year'])))
+            except (ValueError, TypeError):
+                skip_reasons.append(f"Row {row_num}: invalid year value '{row['year']}'")
+                skipped += 1
+                continue
+
+            section_name = _safe_str(row['section_name'])
             section = Section.query.filter_by(
-                name=str(row['section_name']).strip(),
-                year=int(row['year']),
+                name=section_name,
+                year=year,
                 dept_id=dept.id
             ).first()
             if not section:
+                skip_reasons.append(
+                    f"Row {row_num}: section '{section_name}' year={year} "
+                    f"in dept '{dept_name}' not found"
+                )
+                skipped += 1
                 continue
+
+            # Optional full_name — leave blank if not provided
+            full_name = _safe_str(row['full_name']) if 'full_name' in df.columns else ""
+
+            # Optional email
+            email = _safe_str(row['email']) if 'email' in df.columns else ""
+
             user = User(
                 username=username,
                 role='student',
                 dept_id=dept.id,
-                year=int(row['year']),
-                section_id=section.id
+                year=year,
+                section_id=section.id,
+                full_name=full_name,
+                email=email if email else None
             )
-            user.set_password(str(row['password']))
+            user.set_password(password)
             db.session.add(user)
             added += 1
+
         db.session.commit()
         export_csvs()
-        return jsonify({"message": f"Successfully added {added} students"}), 200
+        return jsonify({
+            "message": f"Successfully added {added} student(s)",
+            "added": added,
+            "skipped": skipped,
+            "skip_reasons": skip_reasons[:20]  # cap at 20 to keep response readable
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -137,7 +221,7 @@ def upload_departments(current_user):
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
         
-        df = pd.read_csv(file)
+        df = read_file(file)
         added_count = 0
         for _, row in df.iterrows():
             if not Department.query.filter_by(dept_name=row['dept_name']).first():
@@ -165,7 +249,7 @@ def upload_sections(current_user):
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
         
-        df = pd.read_csv(file)
+        df = read_file(file)
         required_cols = ['name', 'year', 'dept_name']
         missing_cols = [c for c in required_cols if c not in df.columns]
         if missing_cols:
@@ -202,7 +286,7 @@ def upload_courses(current_user):
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
             
-        df = pd.read_csv(file)
+        df = read_file(file)
         # Required columns for a valid course import
         required_cols = ['name', 'type', 'credits', 'year', 'semester', 'dept_name', 'hours_per_week']
         missing_cols = [c for c in required_cols if c not in df.columns]
@@ -278,7 +362,7 @@ def upload_rooms(current_user):
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
             
-        df = pd.read_csv(file)
+        df = read_file(file)
         required_cols = ['name', 'capacity']
         missing_cols = [c for c in required_cols if c not in df.columns]
         if missing_cols:

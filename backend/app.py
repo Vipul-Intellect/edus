@@ -136,6 +136,7 @@ def create_app(config_name=None):
     app.register_blueprint(assessment_bp, url_prefix='/api')
     app.register_blueprint(marks_bp, url_prefix='/api')
     app.register_blueprint(assignment_bp, url_prefix='/api')
+    app.register_blueprint(workload_bp, url_prefix='/api/faculty/workload')
     
     # Rooms status route - register separately at root level
     from routes.faculty_routes import get_rooms_status
@@ -154,8 +155,8 @@ def create_app(config_name=None):
             request.blueprint == 'auth' or 
             request.path.startswith('/api/login') or
             request.path.startswith('/api/register') or
+            request.path.startswith('/api/uploads/') or  # Static file serving — no auth needed
             request.path == '/' or
-            request.path == '/rooms/status' or
             request.path == '/api/debug/tenant'
         )
         

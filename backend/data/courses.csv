@@ -1,11 +1,15 @@
 name,type,credits,year,semester,dept_name,dept_id,faculty_name
-daa,theory,3,1,1,computer science,1,Stuti mehla
-os,theory,3,1,1,computer science,1,upasana lakhina
-m3,theory,3,1,1,computer science,1,yash
+daa,theory,3,1,1,CSE,6,Unknown
+os,theory,3,1,1,CSE,6,Unknown
+m3,theory,3,1,1,CSE,6,Unknown
 maths,theory,3,1,1,electronics,2,Yogesh
-digital electronics,theory,3,1,1,electronics,2,mahajan
-computer network,theory,3,1,1,computer science,1,Anju gandhi
+digital electronics,theory,3,2,3,electronics,2,Unknown
+computer network,theory,3,3,6,CSE,6,Unknown
 computer architecture,theory,3,1,1,aiml,4,Anju gandhi
 english,theory,3,1,1,aiml,4,jaya rani
 probablity,theory,3,1,1,aiml,4,Stuti mehla
 machine learning,lab,3,1,1,aiml,4,Anju gandhi
+unix and linux,theory,5,3,6,CSE,6,Preeti nehra
+compiler design,theory,5,3,6,CSE,6,Unknown
+Advanced computer architecture,theory,5,3,6,CSE,6,Geeta Verma
+cac aptitude,practival,3,1,6,CSE,6,muninder

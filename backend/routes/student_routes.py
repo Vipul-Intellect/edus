@@ -1,6 +1,6 @@
 
 from flask import Blueprint, jsonify
-from sqlalchemy import func
+from sqlalchemy import func, case
 from extensions import db
 from utils.decorators import token_required
 from models import User, Attendance, Course
@@ -42,8 +42,8 @@ def get_attendance_details(current_user):
             Course.name.label('course_name'),
             Course.course_id,
             func.count(Attendance.id).label('total_classes'),
-            func.sum(func.case([(Attendance.status == 'present', 1)], else_=0)).label('present_count'),
-            func.sum(func.case([(Attendance.status == 'late', 1)], else_=0)).label('late_count')
+            func.sum(case((Attendance.status == 'present', 1), else_=0)).label('present_count'),
+            func.sum(case((Attendance.status == 'late', 1), else_=0)).label('late_count')
         ).join(
             Attendance, Attendance.course_id == Course.course_id
         ).filter(
@@ -72,8 +72,8 @@ def get_attendance_details(current_user):
         # Calculate overall attendance directly from Attendance table (including non-course specific)
         total_stats = db.session.query(
             func.count(Attendance.id),
-            func.sum(func.case([(Attendance.status == 'present', 1), (Attendance.status == 'late', 1)], else_=0)),
-            func.sum(func.case([(Attendance.status == 'absent', 1)], else_=0))
+            func.sum(case((Attendance.status == 'present', 1), (Attendance.status == 'late', 1), else_=0)),
+            func.sum(case((Attendance.status == 'absent', 1), else_=0))
         ).filter(Attendance.student_id == current_user.id).first()
 
         total_all = total_stats[0] or 0

@@ -1,4 +1,4 @@
-﻿flask
+flask
 flask-sqlalchemy
 flask-cors
 flask-mail
@@ -15,5 +15,6 @@ cryptography
 gunicorn
 werkzeug
 pandas
+openpyxl
 ortools
 sqlalchemy
