@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LoginPage from './pages/Login/Loginpage';
-import Dashboard from './pages/dashboard/dashboard';
+import Dashboard from './pages/Dashboard/dashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import Courses from './pages/Courses/Course';

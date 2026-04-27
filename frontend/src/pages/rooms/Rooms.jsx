@@ -6,9 +6,9 @@ import { Plus, Search, Edit, Trash2, Building, Users, Info } from "lucide-react"
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-import RoomCard from "../../components/rooms/RoomCard";
-import RoomForm from "../../components/rooms/RoomForm";
-import RoomFilters from "../../components/rooms/RoomFilters";
+import RoomCard from "../../components/Rooms/RoomCard";
+import RoomForm from "../../components/Rooms/RoomForm";
+import RoomFilters from "../../components/Rooms/RoomFilters";
 import BulkImportModal from "../../components/Dashboard/BulkImportModal";
 
 export default function Rooms() {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../Ui/dialog';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Label } from '../Ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../Ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { BellRing, Send, Users, Building2, BookOpen, User, Search, X, Loader2, Paperclip, FileText, Image, FileSpreadsheet, File } from 'lucide-react';
 import ApiService from '../../services/api';
 
