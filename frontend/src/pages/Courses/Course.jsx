@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, BookOpen, Search, Filter, Edit, Trash2, Layers, Clock } from "lucide-react";
 
-import CourseForm from "../../components/courses/CourseForm";
-import CourseCard from "../../components/courses/CourseCard";
+import CourseForm from "../../components/Courses/courseForm";
+import CourseCard from "../../components/Courses/courseCard";
 import BulkImportModal from "../../components/Dashboard/BulkImportModal";
 
 export default function Courses() {
