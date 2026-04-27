@@ -4,6 +4,12 @@ class Config:
     """Base configuration class"""
     SECRET_KEY = os.environ.get("SECRET_KEY", "TimetableSecretKey2025")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 1800,
+        "pool_size": 5,
+        "max_overflow": 2,
+    }
 
     # File Upload
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')

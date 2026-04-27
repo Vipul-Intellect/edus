@@ -36,4 +36,4 @@ COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 8080
 
-CMD ["bash", "-lc", "envsubst '$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && gunicorn --bind 127.0.0.1:5000 --workers 2 --threads 4 --timeout 120 --chdir backend app:app & nginx -g 'daemon off;' & wait -n"]
+CMD ["bash", "-lc", "envsubst '$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && gunicorn --bind 127.0.0.1:5000 --workers 1 --threads 4 --timeout 120 --chdir backend app:app & nginx -g 'daemon off;' & wait -n"]
