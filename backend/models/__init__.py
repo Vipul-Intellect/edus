@@ -6,6 +6,7 @@ from .section import Section
 from .course import Course
 from .classroom import Classroom
 from .room_occupancy import RoomOccupancy
+from .room_issue import RoomIssue
 from .course_allocation import CourseAllocation
 from .timetable import Timetable
 from .swap_request import SwapRequest
@@ -29,7 +30,7 @@ from .user_google_auth import UserGoogleAuth
 
 __all__ = [
     'College', 'User', 'Department', 'Faculty', 'Section', 'Course', 'Classroom',
-    'RoomOccupancy', 'CourseAllocation', 'Timetable', 'SwapRequest',
+    'RoomOccupancy', 'RoomIssue', 'CourseAllocation', 'Timetable', 'SwapRequest',
     'FacultyUnavailability', 'LeaveRequest', 'ChatbotConversation', 'SystemAnnouncement',
     'Attendance', 'FacultyWorkload', 'Meeting', 'FacultyMeetingParticipation',
     'Assessment', 'Grade', 'StudentPerformance', 'Assignment',

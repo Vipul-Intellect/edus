@@ -75,6 +75,7 @@ def create_assignment(current_user):
             due_date = datetime.strptime(due_date_str, '%Y-%m-%d')
 
         new_assignment = Assignment(
+            college_id=current_user.college_id,
             title=title,
             description=description,
             file_url=file_url,
@@ -125,9 +126,12 @@ def get_student_assignments(current_user):
         # 3. Matching Course (if target_audience is course)
         # Filter all assignments that match the criteria
         assignments = Assignment.query.filter(
-            ((Assignment.target_audience == 'section') & (Assignment.section_id == current_user.section_id)) |
-            ((Assignment.target_audience == 'department') & (Assignment.dept_id == current_user.dept_id)) |
-            ((Assignment.target_audience == 'all'))
+            Assignment.college_id == current_user.college_id,
+            (
+                ((Assignment.target_audience == 'section') & (Assignment.section_id == current_user.section_id)) |
+                ((Assignment.target_audience == 'department') & (Assignment.dept_id == current_user.dept_id)) |
+                (Assignment.target_audience == 'all')
+            )
         ).order_by(Assignment.created_at.desc()).all()
         
         return jsonify({
@@ -145,7 +149,10 @@ def get_faculty_assignments(current_user):
         return jsonify({"error": "Unauthorized"}), 403
 
     try:
-        assignments = Assignment.query.filter_by(created_by=current_user.id).order_by(Assignment.created_at.desc()).all()
+        assignments = Assignment.query.filter_by(
+            college_id=current_user.college_id,
+            created_by=current_user.id
+        ).order_by(Assignment.created_at.desc()).all()
         return jsonify({
             "assignments": [a.to_dict() for a in assignments]
         }), 200

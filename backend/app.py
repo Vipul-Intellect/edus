@@ -5,10 +5,11 @@ Uses the modular structure with separate models, routes, services, and utils
 
 import os
 import traceback
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load .env from the backend directory regardless of where the process is launched from
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"), override=True)
+
 
 from flask import Flask, request, jsonify, g, abort
 from config import config
@@ -116,6 +117,7 @@ def create_app(config_name=None):
     from routes.assessment_routes import assessment_bp
     from routes.marks_routes import marks_bp
     from routes.assignment_routes import assignment_bp
+    from routes.room_issue_routes import room_issues_bp
 
     # Register blueprints with prefixes that match the frontend (ApiService)
     app.register_blueprint(auth_bp, url_prefix='/api')
@@ -137,6 +139,7 @@ def create_app(config_name=None):
     app.register_blueprint(marks_bp, url_prefix='/api')
     app.register_blueprint(assignment_bp, url_prefix='/api')
     app.register_blueprint(workload_bp, url_prefix='/api/faculty/workload')
+    app.register_blueprint(room_issues_bp, url_prefix='/api')
     
     # Rooms status route - register separately at root level
     from routes.faculty_routes import get_rooms_status

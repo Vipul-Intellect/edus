@@ -25,7 +25,7 @@ import {
   GraduationCap,
   AlertTriangle,
   AlertCircle,
-
+  Wrench,
   User,
   List,
   Video,
@@ -38,6 +38,7 @@ import MyMeetingsModal from "../components/Dashboard/MyMeetingsModal";
 import SendNotificationModal from "../components/Dashboard/SendNotificationModal";
 import AssessmentManager from "./Teachers/AssessmentManager";
 import AssignmentManager from "./Teachers/AssignmentManager";
+import RoomIssuesBoard from "../components/Dashboard/RoomIssuesBoard";
 
 const ProfileModal = ({ isOpen, onClose, teacher }) => {
   if (!isOpen) return null;
@@ -111,7 +112,7 @@ export default function TeacherDashboard({ onLogout }) {
   const [showCreateMeetingModal, setShowCreateMeetingModal] = useState(false);
   const [showMyMeetingsModal, setShowMyMeetingsModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview"); // overview, assessments, assignments
+  const [activeTab, setActiveTab] = useState("overview"); // overview, assessments, assignments, room-issues
 
   useEffect(() => {
     loadTeacherData();
@@ -325,7 +326,8 @@ export default function TeacherDashboard({ onLogout }) {
             {[
               { id: "overview", label: "Overview", icon: Layout },
               { id: "assessments", label: "Assessments", icon: BookOpen },
-              { id: "assignments", label: "Assignments", icon: FileText }
+              { id: "assignments", label: "Assignments", icon: FileText },
+              { id: "room-issues", label: "Room Issues", icon: Wrench }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -440,6 +442,11 @@ export default function TeacherDashboard({ onLogout }) {
 
         {activeTab === "assessments" && <AssessmentManager />}
         {activeTab === "assignments" && <AssignmentManager />}
+        {activeTab === "room-issues" && (
+          <div className="bg-white rounded-2xl p-6 shadow-sm border" style={{ borderColor: "rgba(99,102,241,0.12)" }}>
+            <RoomIssuesBoard />
+          </div>
+        )}
       </div>
 
       <SwapRequestModal

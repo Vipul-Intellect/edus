@@ -1710,3 +1710,68 @@ Found 1 swap requests.
 GET /swap-requests: User=Preeti nehra (ID 23)
 Resolved Faculty ID: 9
 Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /leave/my-requests: User=Preeti nehra (ID 23)
+Found 0 leave requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.
+GET /swap-requests: User=Preeti nehra (ID 23)
+Resolved Faculty ID: 9
+Found 2 swap requests.

@@ -28,6 +28,7 @@ def handle_assessments(current_user):
             scheduled_date = datetime.strptime(scheduled_date_str, '%Y-%m-%d').date()
             
             new_assessment = Assessment(
+                college_id=current_user.college_id,
                 course_id=course_id,
                 title=title,
                 assessment_type=assessment_type,
@@ -45,19 +46,20 @@ def handle_assessments(current_user):
             }), 201
             
         else: # GET
-            # Filter by course if provided
+            # Always scope to current tenant
+            query = Assessment.query.filter_by(college_id=current_user.college_id)
+
+            # Further filter by course if provided
             course_id = request.args.get('course_id')
-            
-            query = Assessment.query
             if course_id:
                 query = query.filter_by(course_id=course_id)
-            
-            # If teacher, show their assessments
+
+            # Teachers only see assessments they created
             if current_user.role == 'teacher':
                 query = query.filter_by(created_by=current_user.id)
-                
+
             assessments = query.order_by(Assessment.scheduled_date.desc()).all()
-            
+
             return jsonify({
                 "assessments": [a.to_dict() for a in assessments]
             }), 200
@@ -100,43 +102,77 @@ def teacher_get_students(current_user):
 @assessment_bp.route("/teacher/my-courses", methods=["GET"])
 @token_required
 def get_teacher_my_courses(current_user):
-    """Reliably fetch courses assigned to the logged-in teacher"""
+    """
+    Reliably fetch courses a teacher can create assessments for.
+    Fallback chain:
+      1. Courses where courses.faculty_id = faculty.faculty_id  (direct assignment)
+      2. Courses where courses.dept_id = teacher's dept_id      (department-wide fallback)
+      3. All courses in the college                             (last resort — admin/unlinked teachers)
+    """
     if current_user.role not in ['admin', 'teacher']:
         return jsonify({"error": "Unauthorized"}), 403
-        
+
     try:
-        from models import Faculty, Course
-        
-        # 1. Resolve Faculty record
-        faculty = Faculty.query.filter_by(
-            faculty_name=current_user.full_name,
-            dept_id=current_user.dept_id
+        from models import Faculty, Course, Timetable
+
+        def _serialize(courses):
+            return [{"id": c.course_id, "name": c.name, "dept_id": c.dept_id, "year": c.year} for c in courses]
+
+        # ── Attempt 1: via Timetable entries (most accurate) ────────────────
+        # Find all course_ids where this teacher has been assigned in the timetable
+        timetable_course_ids = db.session.execute(
+            db.text("SELECT DISTINCT course_id FROM timetable WHERE faculty_id IN "
+                    "(SELECT faculty_id FROM faculty WHERE faculty_name = :name AND (dept_id = :dept OR dept_id IS NULL))"
+                    " AND college_id = :college"),
+            {"name": current_user.full_name, "dept": current_user.dept_id, "college": current_user.college_id}
+        ).fetchall()
+        timetable_course_ids = [r[0] for r in timetable_course_ids if r[0]]
+
+        if timetable_course_ids:
+            courses = Course.query.filter(Course.course_id.in_(timetable_course_ids)).all()
+            if courses:
+                return jsonify({"courses": _serialize(courses), "source": "timetable"}), 200
+
+        # ── Attempt 2: Faculty record → direct course assignment ─────────────
+        faculty = Faculty.query.filter(
+            Faculty.faculty_name.ilike(current_user.full_name),
+            Faculty.dept_id == current_user.dept_id
         ).first()
-        
+
         if not faculty:
-            # Try partial name match
-            faculty = Faculty.query.filter(
-                Faculty.faculty_name.contains(current_user.full_name.split()[-1]),
-                Faculty.dept_id == current_user.dept_id
-            ).first()
-            
-        if not faculty:
-            return jsonify({"error": "Faculty record not found for this user", "courses": []}), 200
-            
-        # 2. Get courses assigned directly in Course table
-        courses = Course.query.filter_by(faculty_id=faculty.faculty_id).all()
-        
-        return jsonify({
-            "courses": [{
-                "id": c.course_id,
-                "name": c.name,
-                "dept_id": c.dept_id,
-                "year": c.year
-            } for c in courses]
-        }), 200
-        
+            # Partial last-name match
+            last_name = current_user.full_name.split()[-1] if current_user.full_name else ""
+            if last_name:
+                faculty = Faculty.query.filter(
+                    Faculty.faculty_name.ilike(f"%{last_name}%"),
+                    Faculty.dept_id == current_user.dept_id
+                ).first()
+
+        if faculty:
+            courses = Course.query.filter_by(faculty_id=faculty.faculty_id).all()
+            if courses:
+                return jsonify({"courses": _serialize(courses), "source": "faculty_direct"}), 200
+
+        # ── Attempt 3: Department-wide fallback ──────────────────────────────
+        if current_user.dept_id:
+            courses = Course.query.filter_by(dept_id=current_user.dept_id).all()
+            if courses:
+                return jsonify({"courses": _serialize(courses), "source": "department"}), 200
+
+        # ── Attempt 4: All college courses (last resort) ─────────────────────
+        courses = Course.query.filter_by(college_id=current_user.college_id).all()
+        if courses:
+            return jsonify({"courses": _serialize(courses), "source": "college_all"}), 200
+
+        # Truly nothing found
+        return jsonify({"courses": [], "source": "none",
+                        "hint": "No courses found. Ask admin to add courses and assign them to departments."}), 200
+
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 @assessment_bp.route("/assessments/<int:assessment_id>", methods=["GET", "DELETE", "OPTIONS"])
 @token_required

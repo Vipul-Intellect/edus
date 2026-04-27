@@ -1155,6 +1155,55 @@ class ApiService {
             body: formData,
         });
     }
+
+    // ==================== ROOM ISSUES ====================
+
+    /** Teacher: submit a new room issue report */
+    async submitRoomIssue(data) {
+        return this.makeRequest('/api/room-issues', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    /** Get all room issues for the college (teacher-visible board) */
+    async getRoomIssues(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.append('status', filters.status);
+        if (filters.room_id) params.append('room_id', filters.room_id);
+        const qs = params.toString();
+        return this.makeRequest(`/api/room-issues${qs ? `?${qs}` : ''}`);
+    }
+
+    /** Get a single room issue by ID */
+    async getRoomIssue(issueId) {
+        return this.makeRequest(`/api/room-issues/${issueId}`);
+    }
+
+    /** Admin: update issue status + optional admin note */
+    async updateRoomIssueStatus(issueId, data) {
+        return this.makeRequest(`/api/room-issues/${issueId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    /** Admin: permanently delete an issue report */
+    async deleteRoomIssue(issueId) {
+        return this.makeRequest(`/api/room-issues/${issueId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    /** Admin: get filtered list with summary stats */
+    async getAdminRoomIssues(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.append('status', filters.status);
+        if (filters.room_id) params.append('room_id', filters.room_id);
+        if (filters.category) params.append('category', filters.category);
+        const qs = params.toString();
+        return this.makeRequest(`/api/admin/room-issues${qs ? `?${qs}` : ''}`);
+    }
 }
 
 export default new ApiService();

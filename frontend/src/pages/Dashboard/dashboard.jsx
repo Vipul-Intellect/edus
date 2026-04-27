@@ -28,6 +28,7 @@ import AdminTimetableEditor from "../../components/Dashboard/AdminTimetableEdito
 import AdminCreateMeetingModal from "../../components/Dashboard/AdminCreateMeetingModal";
 import MyMeetingsModal from "../../components/Dashboard/MyMeetingsModal";
 import SendNotificationModal from "../../components/Dashboard/SendNotificationModal";
+import AdminRoomIssues from "../../components/Dashboard/AdminRoomIssues";
 
 
 export default function Dashboard() {
@@ -196,6 +197,10 @@ export default function Dashboard() {
           <AdminTimetableEditor />
           <DepartmentManagement />
           <UserManagement />
+          {/* ── Room Issues Panel ── */}
+          <div className="rounded-2xl bg-white p-6 shadow-sm border" style={{ borderColor: "rgba(99,102,241,0.12)" }}>
+            <AdminRoomIssues />
+          </div>
         </div>
 
         <AdminCreateMeetingModal 

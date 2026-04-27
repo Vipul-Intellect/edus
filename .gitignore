@@ -1,8 +1,9 @@
-# Environment variables
+# Environment variables — ignore actual secrets, track the example
 .env
 .env.local
 .env.production
-.env.example
+# .env.example is intentionally tracked (it contains no real secrets)
+
 
 # Python
 __pycache__/

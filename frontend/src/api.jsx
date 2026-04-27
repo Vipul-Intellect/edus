@@ -800,6 +800,72 @@ class ApiService {
     return this.makeRequest('/api/faculty/assignments');
   }
 
+  // ==================== ROOM ISSUES ====================
+
+  /**
+   * Submit a new room issue report (teacher).
+   * @param {object} data - { room_id, issue_categories: string[], remarks?: string }
+   */
+  async submitRoomIssue(data) {
+    return this.makeRequest('/api/room-issues', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  /**
+   * Get all room issues for the college.
+   * @param {object} filters - { status?, room_id? }
+   */
+  async getRoomIssues(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.status) params.append('status', filters.status);
+    if (filters.room_id) params.append('room_id', filters.room_id);
+    const qs = params.toString();
+    return this.makeRequest(`/api/room-issues${qs ? `?${qs}` : ''}`);
+  }
+
+  /**
+   * Get a single room issue by ID.
+   */
+  async getRoomIssue(issueId) {
+    return this.makeRequest(`/api/room-issues/${issueId}`);
+  }
+
+  /**
+   * Admin: update issue status + notes.
+   * @param {number} issueId
+   * @param {object} data - { status: string, admin_notes?: string }
+   */
+  async updateRoomIssueStatus(issueId, data) {
+    return this.makeRequest(`/api/room-issues/${issueId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  }
+
+  /**
+   * Admin: delete a room issue report.
+   */
+  async deleteRoomIssue(issueId) {
+    return this.makeRequest(`/api/room-issues/${issueId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  /**
+   * Admin: get filtered list with summary stats.
+   * @param {object} filters - { status?, room_id?, category? }
+   */
+  async getAdminRoomIssues(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.status) params.append('status', filters.status);
+    if (filters.room_id) params.append('room_id', filters.room_id);
+    if (filters.category) params.append('category', filters.category);
+    const qs = params.toString();
+    return this.makeRequest(`/api/admin/room-issues${qs ? `?${qs}` : ''}`);
+  }
+
   // ==================== UTILITY METHODS ====================
 
   // Get API base URL
