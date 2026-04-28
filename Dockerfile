@@ -31,9 +31,12 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend ./backend
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
+RUN chmod +x /app/docker-entrypoint.sh
+
 EXPOSE 8080
 
-CMD ["bash", "-lc", "envsubst '$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && gunicorn --bind 127.0.0.1:5000 --workers 1 --threads 4 --timeout 120 --chdir backend app:app & nginx -g 'daemon off;' & wait -n"]
+CMD ["/app/docker-entrypoint.sh"]

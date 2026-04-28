@@ -12,17 +12,18 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 
 from flask import Flask, request, jsonify, g, abort
+from sqlalchemy import text
 from config import config
 from extensions import init_extensions, db, scheduler
 from models import *
 from utils.tenant_middleware import load_tenant_from_token
 from utils.query_filter import setup_tenant_filtering
 
+SCHEDULER_LOCK_KEY = 8642001
+
 def _ensure_schema_compatibility():
     """Apply tiny safe schema fixes needed by existing production databases."""
     try:
-        from sqlalchemy import text
-
         if db.engine.dialect.name == "postgresql":
             db.session.execute(text(
                 "ALTER TABLE users ALTER COLUMN password_hash TYPE VARCHAR(255)"
@@ -264,13 +265,60 @@ app = create_app()
 # Start background scheduler for Google Calendar sync (only if APScheduler is available)
 from extensions import SCHEDULER_AVAILABLE, scheduler
 
+def _acquire_scheduler_lock():
+    """Acquire a PostgreSQL advisory lock so only one instance runs the sync."""
+    if db.engine.dialect.name != "postgresql":
+        return None
+
+    conn = db.engine.connect()
+    try:
+        acquired = conn.execute(
+            text("SELECT pg_try_advisory_lock(:lock_key)"),
+            {"lock_key": SCHEDULER_LOCK_KEY}
+        ).scalar()
+        if acquired:
+            print("[GCal] Scheduler advisory lock acquired")
+            return conn
+
+        print("[GCal] Scheduler advisory lock already held by another instance - skipping")
+        conn.close()
+        return None
+    except Exception as e:
+        print(f"[GCal] Failed to acquire scheduler advisory lock: {e}")
+        conn.close()
+        return None
+
+
+def _release_scheduler_lock(conn):
+    if conn is None:
+        return
+
+    try:
+        conn.execute(
+            text("SELECT pg_advisory_unlock(:lock_key)"),
+            {"lock_key": SCHEDULER_LOCK_KEY}
+        )
+        print("[GCal] Scheduler advisory lock released")
+    except Exception as e:
+        print(f"[GCal] Failed to release scheduler advisory lock: {e}")
+    finally:
+        conn.close()
+
+
 def _background_sync():
     with app.app_context():
+        lock_conn = None
         try:
+            lock_conn = _acquire_scheduler_lock()
+            if db.engine.dialect.name == "postgresql" and lock_conn is None:
+                return
+
             from services.google_calendar_service import background_sync_all_users
             background_sync_all_users()
         except Exception as e:
             print(f"[GCal BG] Scheduler error: {e}")
+        finally:
+            _release_scheduler_lock(lock_conn)
 
 if SCHEDULER_AVAILABLE and scheduler is not None:
     try:
@@ -279,7 +327,9 @@ if SCHEDULER_AVAILABLE and scheduler is not None:
             trigger='interval',
             hours=6,
             id='gcal_sync',
-            replace_existing=True
+            replace_existing=True,
+            coalesce=True,
+            max_instances=1
         )
         scheduler.start()
         print("[GCal] Background sync scheduler started (every 6h)")

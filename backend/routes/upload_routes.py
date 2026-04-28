@@ -4,6 +4,8 @@ CSV / Excel upload routes
 
 import pandas as pd
 from flask import Blueprint, request, jsonify
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from extensions import db
 from models import Department, Section, Faculty, User, Course, Classroom
 from utils.decorators import token_required, admin_required
@@ -39,6 +41,69 @@ def read_file(file):
     return df
 
 
+def _safe_email(val):
+    return _safe_str(val).lower()
+
+
+def _truncate_reasons(reasons, limit=20):
+    return reasons[:limit]
+
+
+def _find_user_by_email(college_id, email):
+    if not email:
+        return None
+    normalized = email.lower()
+    return User.query.filter(
+        User.college_id == college_id,
+        User.email.isnot(None),
+        func.lower(User.email) == normalized
+    ).first()
+
+
+def _find_user_by_username(college_id, username):
+    if not username:
+        return None
+    return User.query.filter_by(college_id=college_id, username=username).first()
+
+
+def _find_faculty_record(college_id, faculty_name, dept_id, email):
+    if email:
+        faculty = Faculty.query.filter(
+            Faculty.college_id == college_id,
+            Faculty.email.isnot(None),
+            func.lower(Faculty.email) == email.lower()
+        ).first()
+        if faculty:
+            return faculty
+
+    return Faculty.query.filter_by(
+        college_id=college_id,
+        faculty_name=faculty_name,
+        dept_id=dept_id
+    ).first()
+
+
+def _find_faculty_for_user_update(college_id, matched_user, faculty_name, dept_id, email):
+    """Prefer the current CSV identity, then fall back to the teacher's old profile."""
+    faculty = _find_faculty_record(college_id, faculty_name, dept_id, email)
+    if faculty or matched_user is None:
+        return faculty
+
+    old_name = _safe_str(matched_user.full_name)
+    old_email = _safe_email(matched_user.email)
+    old_dept_id = matched_user.dept_id
+
+    if old_name or old_email or old_dept_id:
+        return _find_faculty_record(
+            college_id,
+            old_name or faculty_name,
+            old_dept_id or dept_id,
+            old_email
+        )
+
+    return None
+
+
 @upload_bp.route("/faculty", methods=["POST", "OPTIONS"])
 @token_required
 @admin_required
@@ -52,54 +117,152 @@ def upload_faculty(current_user):
         missing_cols = [c for c in required_cols if c not in df.columns]
         if missing_cols:
             return jsonify({"error": f"CSV must contain columns: {', '.join(missing_cols)}"}), 400
+
         added = 0
-        for _, row in df.iterrows():
-            fname = str(row['faculty_name']).strip() if pd.notna(row['faculty_name']) else ""
-            dname = str(row['dept_name']).strip() if pd.notna(row['dept_name']) else ""
-            username = str(row['username']).strip() if pd.notna(row['username']) else ""
-            password = str(row['password']).strip() if pd.notna(row['password']) else ""
-            email = str(row['email']).strip() if pd.notna(row['email']) else ""
-            max_hours = int(row['max_hours']) if pd.notna(row['max_hours']) else None
+        updated = 0
+        skipped = 0
+        conflicts = 0
+        skip_reasons = []
+        college_id = current_user.college_id
 
-            if not fname or not dname or not username or not password or not email or not max_hours:
-                continue
-            
-            # Check if Faculty exists
-            if Faculty.query.filter_by(faculty_name=fname).first():
-                continue
-            
-            # Check if User exists
-            if User.query.filter_by(username=username).first():
+        for i, row in df.iterrows():
+            row_num = i + 2  # header is row 1
+            fname = _safe_str(row['faculty_name'])
+            dname = _safe_str(row['dept_name'])
+            username = _safe_str(row['username'])
+            password = _safe_str(row['password'])
+            email = _safe_email(row['email'])
+            raw_max_hours = _safe_str(row['max_hours'])
+
+            if not fname or not dname or not username or not password or not email or not raw_max_hours:
+                skipped += 1
+                skip_reasons.append(
+                    f"Row {row_num}: missing one or more required fields "
+                    "(faculty_name, dept_name, username, password, email, max_hours)"
+                )
                 continue
 
-            dept = Department.query.filter_by(dept_name=dname).first()
-            if not dept:
+            try:
+                max_hours = int(float(raw_max_hours))
+            except (ValueError, TypeError):
+                skipped += 1
+                skip_reasons.append(f"Row {row_num}: invalid max_hours value '{raw_max_hours}'")
                 continue
 
-            # Create Faculty record
-            faculty = Faculty(
-                faculty_name=fname,
-                max_hours=max_hours,
-                dept_id=dept.id,
-                email=email
-            )
-            db.session.add(faculty)
-            
-            # Create User record for login
-            user = User(
-                username=username,
-                role='teacher',
-                dept_id=dept.id,
-                full_name=fname,
-                email=faculty.email
-            )
-            user.set_password(password)
-            db.session.add(user)
+            if max_hours <= 0:
+                skipped += 1
+                skip_reasons.append(f"Row {row_num}: max_hours must be greater than 0")
+                continue
 
-            added += 1
+            with db.session.no_autoflush:
+                dept = Department.query.filter_by(college_id=college_id, dept_name=dname).first()
+                if not dept:
+                    skipped += 1
+                    skip_reasons.append(f"Row {row_num}: department '{dname}' not found")
+                    continue
+
+                email_user = _find_user_by_email(college_id, email)
+                username_user = _find_user_by_username(college_id, username)
+
+            if email_user and username_user and email_user.id != username_user.id:
+                skipped += 1
+                conflicts += 1
+                skip_reasons.append(
+                    f"Row {row_num}: conflict - email '{email}' and username '{username}' "
+                    "belong to different existing users"
+                )
+                continue
+
+            matched_user = email_user or username_user
+            if matched_user and matched_user.role != 'teacher':
+                skipped += 1
+                conflicts += 1
+                match_value = email if email_user else username
+                skip_reasons.append(
+                    f"Row {row_num}: conflict - '{match_value}' belongs to a non-teacher user"
+                )
+                continue
+
+            try:
+                with db.session.begin_nested():
+                    if matched_user:
+                        faculty = _find_faculty_for_user_update(
+                            college_id, matched_user, fname, dept.id, email
+                        )
+
+                        matched_user.full_name = fname
+                        matched_user.email = email
+                        matched_user.dept_id = dept.id
+
+                        if not faculty:
+                            faculty = Faculty(
+                                college_id=college_id,
+                                faculty_name=fname,
+                                max_hours=max_hours,
+                                dept_id=dept.id,
+                                email=email
+                            )
+                            db.session.add(faculty)
+                        else:
+                            faculty.faculty_name = fname
+                            faculty.max_hours = max_hours
+                            faculty.dept_id = dept.id
+                            faculty.email = email
+
+                    else:
+                        user = User(
+                            college_id=college_id,
+                            username=username,
+                            role='teacher',
+                            dept_id=dept.id,
+                            full_name=fname,
+                            email=email
+                        )
+                        user.set_password(password)
+                        db.session.add(user)
+
+                        faculty = _find_faculty_record(college_id, fname, dept.id, email)
+                        if not faculty:
+                            faculty = Faculty(
+                                college_id=college_id,
+                                faculty_name=fname,
+                                max_hours=max_hours,
+                                dept_id=dept.id,
+                                email=email
+                            )
+                            db.session.add(faculty)
+                        else:
+                            faculty.faculty_name = fname
+                            faculty.max_hours = max_hours
+                            faculty.dept_id = dept.id
+                            faculty.email = email
+
+                    db.session.flush()
+                    if matched_user:
+                        updated += 1
+                    else:
+                        added += 1
+            except IntegrityError as exc:
+                skipped += 1
+                conflicts += 1
+                message = str(getattr(exc, "orig", exc))
+                skip_reasons.append(f"Row {row_num}: database conflict - {message}")
+
         db.session.commit()
-        export_csvs()
-        return jsonify({"message": f"Successfully added {added} faculty members"}), 200
+        if added or updated:
+            export_csvs()
+
+        return jsonify({
+            "message": (
+                f"Faculty import completed: {added} added, {updated} updated, "
+                f"{skipped} skipped"
+            ),
+            "added": added,
+            "updated": updated,
+            "skipped": skipped,
+            "conflicts": conflicts,
+            "skip_reasons": _truncate_reasons(skip_reasons)
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -125,7 +288,9 @@ def upload_students(current_user):
 
         added = 0
         skipped = 0
+        conflicts = 0
         skip_reasons = []
+        college_id = current_user.college_id
 
         for i, row in df.iterrows():
             row_num = i + 2  # 1-indexed + header row
@@ -136,9 +301,10 @@ def upload_students(current_user):
                 skipped += 1
                 continue
 
-            if User.query.filter_by(username=username).first():
+            if _find_user_by_username(college_id, username):
                 skip_reasons.append(f"Row {row_num}: username '{username}' already exists")
                 skipped += 1
+                conflicts += 1
                 continue
 
             password = _safe_str(row['password'])
@@ -148,7 +314,7 @@ def upload_students(current_user):
                 continue
 
             dept_name = _safe_str(row['dept_name'])
-            dept = Department.query.filter_by(dept_name=dept_name).first()
+            dept = Department.query.filter_by(college_id=college_id, dept_name=dept_name).first()
             if not dept:
                 skip_reasons.append(f"Row {row_num}: department '{dept_name}' not found")
                 skipped += 1
@@ -164,6 +330,7 @@ def upload_students(current_user):
 
             section_name = _safe_str(row['section_name'])
             section = Section.query.filter_by(
+                college_id=college_id,
                 name=section_name,
                 year=year,
                 dept_id=dept.id
@@ -180,27 +347,43 @@ def upload_students(current_user):
             full_name = _safe_str(row['full_name']) if 'full_name' in df.columns else ""
 
             # Optional email
-            email = _safe_str(row['email']) if 'email' in df.columns else ""
+            email = _safe_email(row['email']) if 'email' in df.columns else ""
+            if email and _find_user_by_email(college_id, email):
+                skip_reasons.append(f"Row {row_num}: email '{email}' already exists")
+                skipped += 1
+                conflicts += 1
+                continue
 
-            user = User(
-                username=username,
-                role='student',
-                dept_id=dept.id,
-                year=year,
-                section_id=section.id,
-                full_name=full_name,
-                email=email if email else None
-            )
-            user.set_password(password)
-            db.session.add(user)
-            added += 1
+            try:
+                with db.session.begin_nested():
+                    user = User(
+                        college_id=college_id,
+                        username=username,
+                        role='student',
+                        dept_id=dept.id,
+                        year=year,
+                        section_id=section.id,
+                        full_name=full_name,
+                        email=email if email else None
+                    )
+                    user.set_password(password)
+                    db.session.add(user)
+                    db.session.flush()
+                    added += 1
+            except IntegrityError as exc:
+                skipped += 1
+                conflicts += 1
+                message = str(getattr(exc, "orig", exc))
+                skip_reasons.append(f"Row {row_num}: database conflict - {message}")
 
         db.session.commit()
-        export_csvs()
+        if added:
+            export_csvs()
         return jsonify({
             "message": f"Successfully added {added} student(s)",
             "added": added,
             "skipped": skipped,
+            "conflicts": conflicts,
             "skip_reasons": skip_reasons[:20]  # cap at 20 to keep response readable
         }), 200
     except Exception as e:

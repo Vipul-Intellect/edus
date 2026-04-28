@@ -260,16 +260,26 @@ export default function UserManagement() {
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-200">
                                             ✓ {uploadResult.added ?? 0} added
                                         </span>
+                                        {(uploadResult.updated ?? 0) > 0 && (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                                                ↻ {uploadResult.updated} updated
+                                            </span>
+                                        )}
                                         {(uploadResult.skipped ?? 0) > 0 && (
                                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                                                 ⚠ {uploadResult.skipped} skipped
+                                            </span>
+                                        )}
+                                        {(uploadResult.conflicts ?? 0) > 0 && (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800 border border-red-200">
+                                                ! {uploadResult.conflicts} conflicts
                                             </span>
                                         )}
                                     </div>
 
                                     {uploadResult.skip_reasons?.length > 0 && (
                                         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                                            <p className="text-xs font-semibold text-amber-800 mb-1.5">Skip reasons (fix these in your file):</p>
+                                            <p className="text-xs font-semibold text-amber-800 mb-1.5">Skipped or conflicting rows:</p>
                                             <ul className="space-y-0.5 max-h-48 overflow-y-auto">
                                                 {uploadResult.skip_reasons.map((r, i) => (
                                                     <li key={i} className="text-xs text-amber-700 font-mono">{r}</li>
