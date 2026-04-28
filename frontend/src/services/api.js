@@ -394,8 +394,13 @@ class ApiService {
 
   // ==================== ADMIN - COURSES ====================
 
-  async getCourses() {
+  async getAdminCourses() {
     return this.makeRequest('/admin/courses');
+  }
+
+  // Alias kept for backward compatibility — always calls the admin endpoint
+  async getCourses() {
+    return this.getAdminCourses();
   }
 
   async addCourse(courseData) {
@@ -936,7 +941,7 @@ class ApiService {
     return this.makeRequest(`/teacher/sections?department=${encodeURIComponent(department)}&year=${year}`);
   }
 
-  async getCourses(department, year) {
+  async getTeacherCourses(department, year) {
     return this.makeRequest(`/teacher/courses?department=${encodeURIComponent(department)}&year=${year}`);
   }
 

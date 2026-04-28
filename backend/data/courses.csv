@@ -1,16 +1,16 @@
-name,type,credits,year,semester,dept_name,dept_id,faculty_name
-daa,theory,3,1,1,CSE,6,Unknown
-os,theory,3,1,1,CSE,6,Unknown
-m3,theory,3,1,1,CSE,6,Unknown
-maths,theory,3,1,1,electronics,2,Yogesh
-digital electronics,theory,3,2,3,electronics,2,Unknown
-computer network,theory,3,3,6,CSE,6,Unknown
+name,type,credits,year,semester,dept_name,hours_per_week,faculty_name
+daa,theory,3,1,1,CSE,4,Unknown
+os,theory,3,1,1,CSE,4,Unknown
+m3,theory,3,1,1,CSE,4,Unknown
+maths,theory,3,1,1,electronics,4,Yogesh
+digital electronics,theory,3,2,3,electronics,4,Unknown
+computer network,theory,3,3,6,CSE,4,Unknown
 computer architecture,theory,3,1,1,aiml,4,Anju gandhi
-english,theory,3,1,1,aiml,4,jaya rani
+english,theory,3,1,1,aiml,3,jaya rani
 probablity,theory,3,1,1,aiml,4,Stuti mehla
 machine learning,lab,3,1,1,aiml,4,Anju gandhi
-unix and linux,theory,5,3,6,CSE,6,Preeti nehra
-compiler design,theory,5,3,6,CSE,6,Unknown
-Advanced computer architecture,theory,5,3,6,CSE,6,Geeta Verma
-cac aptitude,practival,3,1,6,CSE,6,muninder
-MPI,theory,3,3,6,CSE,6,rita singh
+unix and linux,theory,5,3,6,CSE,5,Preeti nehra
+compiler design,theory,5,3,6,CSE,5,Unknown
+Advanced computer architecture,theory,5,3,6,CSE,5,Geeta Verma
+cac aptitude,practical,3,1,6,CSE,3,muninder
+MPI,theory,3,3,6,CSE,4,rita singh

@@ -58,7 +58,7 @@ const MarkAttendance = () => {
 
     const loadCourses = async () => {
         try {
-            const data = await apiService.getCourses(selectedDept, selectedYear);
+            const data = await apiService.getTeacherCourses(selectedDept, selectedYear);
             setCourses(data || []);
         } catch (error) {
             console.error("Failed to load courses", error);

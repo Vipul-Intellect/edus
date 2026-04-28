@@ -33,9 +33,10 @@ def handle_options():
 @token_required
 @admin_required
 def admin_get_users(current_user):
-    """Get all registered users"""
+    """Get all registered users scoped to this college"""
     try:
-        users = User.query.order_by(User.id.desc()).all()
+        college_id = current_user.college_id
+        users = User.query.filter_by(college_id=college_id).order_by(User.id.desc()).all()
         return jsonify([{
             "id": u.id,
             "username": u.username,
@@ -76,7 +77,7 @@ def admin_manage_user(current_user, user_id):
             if "is_active" in data:
                 user.is_active = bool(data["is_active"])
             if "dept_name" in data and data["dept_name"]:
-                dept = Department.query.filter_by(dept_name=data["dept_name"]).first()
+                dept = Department.query.filter_by(college_id=current_user.college_id, dept_name=data["dept_name"]).first()
                 if dept:
                     user.dept_id = dept.id
                 else:
@@ -239,7 +240,7 @@ def admin_manage_faculty(current_user, faculty_id):
                 faculty.subject = data['subject'].strip()
             
             if 'dept_name' in data:
-                dept = Department.query.filter_by(dept_name=data['dept_name']).first()
+                dept = Department.query.filter_by(college_id=current_user.college_id, dept_name=data['dept_name']).first()
                 if not dept:
                     return jsonify({"error": "Department not found"}), 404
                 faculty.dept_id = dept.id
@@ -266,9 +267,10 @@ def admin_manage_faculty(current_user, faculty_id):
 @token_required
 @admin_required
 def admin_students(current_user):
+    college_id = current_user.college_id
     if request.method == "GET":
         try:
-            students = User.query.filter_by(role='student').all()
+            students = User.query.filter_by(college_id=college_id, role='student').all()
             return jsonify([
                 {
                     "id": s.id,
@@ -289,19 +291,20 @@ def admin_students(current_user):
             if not all(data.get(field) for field in required_fields):
                 return jsonify({"error": "Username, full name, department, year, and password are required"}), 400
             
-            # Check if username already exists
-            if User.query.filter_by(username=data["username"].strip()).first():
+            # Check if username already exists within this college
+            if User.query.filter_by(college_id=college_id, username=data["username"].strip()).first():
                 return jsonify({"error": "Username already exists"}), 400
             
-            # Find department
-            dept = Department.query.filter_by(dept_name=data["dept_name"]).first()
+            # Find department scoped to college
+            dept = Department.query.filter_by(college_id=college_id, dept_name=data["dept_name"]).first()
             if not dept:
                 return jsonify({"error": "Department not found"}), 404
             
-            # Find section if provided
+            # Find section if provided, scoped to college
             section_id = None
             if data.get("section_name"):
                 section = Section.query.filter_by(
+                    college_id=college_id,
                     name=data["section_name"],
                     year=data["year"],
                     dept_id=dept.id
@@ -309,8 +312,9 @@ def admin_students(current_user):
                 if section:
                     section_id = section.id
             
-            # Create student user
+            # Create student user — must include college_id (NOT NULL constraint)
             student = User(
+                college_id=college_id,
                 username=data["username"].strip(),
                 full_name=data["full_name"].strip(),
                 email=data.get("email", "").strip() if data.get("email") else None,
@@ -464,7 +468,7 @@ def admin_manage_course(current_user, course_id):
                 course.hours_per_week = data['hours_per_week']
             
             if 'dept_name' in data:
-                dept = Department.query.filter_by(dept_name=data['dept_name']).first()
+                dept = Department.query.filter_by(college_id=current_user.college_id, dept_name=data['dept_name']).first()
                 if dept:
                     course.dept_id = dept.id
             

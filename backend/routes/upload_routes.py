@@ -393,27 +393,45 @@ def upload_students(current_user):
 
 @upload_bp.route("/departments", methods=["GET", "POST", "OPTIONS"])
 @token_required
+@admin_required  # FIX: was only @token_required — anyone could call this; also missing college_id scoping
 def upload_departments(current_user):
     if request.method != "POST":
         return jsonify({"message": "Use POST with form-data 'file' (CSV)"}), 200
-    if current_user.role != "admin":
-        return jsonify({"error": "Unauthorized - admin only"}), 403
-    
+
     try:
         file = request.files.get("file")
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
-        
+
         df = read_file(file)
+
+        if 'dept_name' not in df.columns:
+            return jsonify({"error": "CSV must contain column: dept_name"}), 400
+
+        college_id = current_user.college_id  # FIX: scope all queries to this college
         added_count = 0
+        skipped_count = 0
+
         for _, row in df.iterrows():
-            if not Department.query.filter_by(dept_name=row['dept_name']).first():
-                dept = Department(dept_name=row['dept_name'])
+            dname = _safe_str(row['dept_name'])
+            if not dname:
+                skipped_count += 1
+                continue
+            # FIX: was filter_by(dept_name=...) — no college scope → cross-tenant collision
+            if not Department.query.filter_by(college_id=college_id, dept_name=dname).first():
+                dept = Department(college_id=college_id, dept_name=dname)
                 db.session.add(dept)
                 added_count += 1
+            else:
+                skipped_count += 1
+
         db.session.commit()
         export_csvs()
-        return jsonify({"message": f"Successfully added {added_count} departments"}), 200
+        return jsonify({
+            "message": f"Successfully added {added_count} departments",
+            "added": added_count,
+            "skipped": skipped_count
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -421,35 +439,64 @@ def upload_departments(current_user):
 
 @upload_bp.route("/sections", methods=["GET", "POST", "OPTIONS"])
 @token_required
+@admin_required  # FIX: was only @token_required — missing college_id scoping
 def upload_sections(current_user):
     if request.method != "POST":
         return jsonify({"message": "Use POST with form-data 'file' (CSV)"}), 200
-    if current_user.role != "admin":
-        return jsonify({"error": "Unauthorized - admin only"}), 403
-    
+
     try:
         file = request.files.get("file")
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
-        
+
         df = read_file(file)
         required_cols = ['name', 'year', 'dept_name']
         missing_cols = [c for c in required_cols if c not in df.columns]
         if missing_cols:
             return jsonify({"error": f"CSV must contain columns: {', '.join(missing_cols)}"}), 400
-        
+
+        college_id = current_user.college_id  # FIX: scope all queries to this college
         added_count = 0
+        skipped_count = 0
+
         for _, row in df.iterrows():
-            dept = Department.query.filter_by(dept_name=row['dept_name']).first()
-            if not dept:
+            dname = _safe_str(row['dept_name'])
+            sname = _safe_str(row['name'])
+            if not dname or not sname:
+                skipped_count += 1
                 continue
-            if not Section.query.filter_by(name=row['name'], year=int(row['year']), dept_id=dept.id).first():
-                section = Section(name=row['name'], year=int(row['year']), dept_id=dept.id)
+
+            # FIX: was filter_by(dept_name=...) — no college_id scope
+            dept = Department.query.filter_by(college_id=college_id, dept_name=dname).first()
+            if not dept:
+                skipped_count += 1
+                continue
+
+            try:
+                year = int(float(_safe_str(row['year'])))
+            except (ValueError, TypeError):
+                skipped_count += 1
+                continue
+
+            # FIX: was filter_by(name=..., year=..., dept_id=...) — no college_id scope
+            if not Section.query.filter_by(
+                college_id=college_id, name=sname, year=year, dept_id=dept.id
+            ).first():
+                section = Section(
+                    college_id=college_id, name=sname, year=year, dept_id=dept.id
+                )
                 db.session.add(section)
                 added_count += 1
+            else:
+                skipped_count += 1
+
         db.session.commit()
         export_csvs()
-        return jsonify({"message": f"Successfully added {added_count} sections"}), 200
+        return jsonify({
+            "message": f"Successfully added {added_count} sections",
+            "added": added_count,
+            "skipped": skipped_count
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -478,13 +525,16 @@ def upload_courses(current_user):
             
         added_count = 0
         skipped_count = 0
+        skip_reasons = []
         college_id = current_user.college_id
         
-        for _, row in df.iterrows():
+        for i, row in df.iterrows():
+            row_num = i + 2
             # Get data and strip whitespace
             c_name = str(row['name']).strip() if pd.notna(row['name']) else ""
             if not c_name:
                 skipped_count += 1
+                skip_reasons.append(f"Row {row_num}: empty course name")
                 continue
                 
             # Find department by name, scoped to this college
@@ -492,11 +542,13 @@ def upload_courses(current_user):
             dept = Department.query.filter_by(college_id=college_id, dept_name=dept_name).first()
             if not dept:
                 skipped_count += 1
+                skip_reasons.append(f"Row {row_num}: department '{dept_name}' not found for this college")
                 continue
                 
             # Check if course already exists in that department
             if Course.query.filter_by(college_id=college_id, name=c_name, dept_id=dept.id).first():
                 skipped_count += 1
+                skip_reasons.append(f"Row {row_num}: course '{c_name}' already exists in '{dept_name}'")
                 continue
                 
             # Optional faculty assignment, scoped to this college
@@ -511,12 +563,12 @@ def upload_courses(current_user):
                 college_id=college_id,
                 name=c_name,
                 type=str(row['type']).strip() if pd.notna(row['type']) else "Core",
-                credits=int(row['credits']) if pd.notna(row['credits']) else 4,
-                year=int(row['year']) if pd.notna(row['year']) else 1,
-                semester=int(row['semester']) if pd.notna(row['semester']) else 1,
+                credits=int(float(row['credits'])) if pd.notna(row['credits']) else 4,
+                year=int(float(row['year'])) if pd.notna(row['year']) else 1,
+                semester=int(float(row['semester'])) if pd.notna(row['semester']) else 1,
                 dept_id=dept.id,
                 faculty_id=faculty_id,
-                hours_per_week=int(row['hours_per_week']) if pd.notna(row['hours_per_week']) else 6
+                hours_per_week=int(float(row['hours_per_week'])) if pd.notna(row['hours_per_week']) else 6
             )
             db.session.add(course)
             added_count += 1
@@ -525,7 +577,9 @@ def upload_courses(current_user):
         export_csvs()
         return jsonify({
             "message": f"Successfully added {added_count} courses",
-            "skipped": skipped_count
+            "added": added_count,
+            "skipped": skipped_count,
+            "skip_reasons": skip_reasons[:20]
         }), 200
         
     except Exception as e:
@@ -555,6 +609,7 @@ def upload_rooms(current_user):
             
         added_count = 0
         skipped_count = 0
+        college_id = current_user.college_id
         
         for _, row in df.iterrows():
             r_name = str(row['name']).strip() if pd.notna(row['name']) else ""
@@ -562,12 +617,13 @@ def upload_rooms(current_user):
                 skipped_count += 1
                 continue
                 
-            # Check if classroom already exists
-            if Classroom.query.filter_by(name=r_name).first():
+            # FIX: scope to college_id
+            if Classroom.query.filter_by(college_id=college_id, name=r_name).first():
                 skipped_count += 1
                 continue
                 
             room = Classroom(
+                college_id=college_id,
                 name=r_name,
                 capacity=int(row['capacity']) if pd.notna(row['capacity']) else 30,
                 resources=str(row['resources']).strip() if ('resources' in df.columns and pd.notna(row['resources'])) else ""
