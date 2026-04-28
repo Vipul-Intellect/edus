@@ -658,20 +658,7 @@ class ApiService {
     });
   }
 
-  // ==================== GENERAL - TIMETABLE ====================
-
-  async getTimetable(filters = {}) {
-    const params = new URLSearchParams();
-
-    Object.keys(filters).forEach(key => {
-      if (filters[key]) {
-        params.append(key, filters[key]);
-      }
-    });
-
-    const queryString = params.toString();
-    return this.makeRequest(`/get_timetable${queryString ? `?${queryString}` : ''}`);
-  }
+  // getTimetable is defined earlier in this class (line ~311) — this duplicate is removed to prevent silent override
 
   // ==================== LEGACY ENDPOINTS (Backward Compatibility) ====================
 
@@ -853,19 +840,7 @@ class ApiService {
     });
   }
 
-  async getCoursesLegacy(deptName = null, year = null) {
-    let url = '/get_courses';
-    const params = new URLSearchParams();
-
-    if (deptName) params.append('dept_name', deptName);
-    if (year) params.append('year', year);
-
-    if (params.toString()) {
-      url += `?${params.toString()}`;
-    }
-
-    return this.makeRequest(url);
-  }
+  // getCoursesLegacy is defined earlier in this class — this duplicate removed to prevent silent override
 
   async addRoomLegacy(roomData) {
     return this.makeRequest('/add_room', {

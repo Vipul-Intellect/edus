@@ -5,7 +5,6 @@ Timetable routes - Generation and viewing
 from flask import Blueprint, request, jsonify, make_response
 from extensions import db
 from models import Timetable
-from services.scheduler_service import generate_timetable_internal
 from utils.decorators import token_required
 
 timetable_bp = Blueprint('timetable', __name__)
@@ -14,47 +13,47 @@ timetable_bp = Blueprint('timetable', __name__)
 
 
 @timetable_bp.route("/get_timetable", methods=["GET", "OPTIONS"])
-def get_timetable():
+@token_required
+def get_timetable(current_user):
     if request.method == 'OPTIONS':
         return jsonify({}), 200
     try:
-        dept_name = request.args.get("dept_name")
-        year = request.args.get("year")
+        college_id   = current_user.college_id
+        dept_name    = request.args.get("dept_name")
+        year         = request.args.get("year")
         section_name = request.args.get("section")
 
-        if dept_name or year or section_name:
-            timetable = []
-            for t in Timetable.query.all():
-                include = True
-                if dept_name and t.course.department.dept_name != dept_name:
-                    include = False
-                if year and t.section.year != int(year):
-                    include = False
-                if section_name and t.section.name != section_name:
-                    include = False
-                if include:
-                    timetable.append(t)
-        else:
-            timetable = Timetable.query.all()
+        query = Timetable.query.filter_by(college_id=college_id)
+        all_entries = query.all()
+
+        timetable = []
+        for t in all_entries:
+            if dept_name and (not t.course or not t.course.department or t.course.department.dept_name != dept_name):
+                continue
+            if year and (not t.section or t.section.year != int(year)):
+                continue
+            if section_name and (not t.section or t.section.name != section_name):
+                continue
+            timetable.append(t)
 
         result = []
         for t in timetable:
             result.append({
-                "id": t.timetable_id,
-                "course": t.course.name,
-                "section": f"{t.section.name} (Year {t.section.year})",
-                "faculty": t.faculty.faculty_name if t.faculty else "N/A",
-                "room": t.room.name,
-                "day": t.day,
-                "start_time": t.start_time,
-                "department": t.course.department.dept_name,
-                "year": t.section.year,
-                "credits": t.course.credits,
-                "type": t.course.type,
-                "is_swapped": t.is_swapped,
-                "swapped_at": t.swapped_at.isoformat() if t.swapped_at else None,
-                "swapped_by": t.swapped_by.full_name if t.swapped_by else None,
-                "swap_group_id": t.swap_group_id,
+                "id":                  t.timetable_id,
+                "course":              t.course.name if t.course else "N/A",
+                "section":             f"{t.section.name} (Year {t.section.year})" if t.section else "N/A",
+                "faculty":             t.faculty.faculty_name if t.faculty else "Unassigned",
+                "room":                t.room.name if t.room else "N/A",
+                "day":                 t.day,
+                "start_time":          t.start_time,
+                "department":          t.course.department.dept_name if t.course and t.course.department else "N/A",
+                "year":                t.section.year if t.section else None,
+                "credits":             t.course.credits if t.course else None,
+                "type":                t.course.type if t.course else None,
+                "is_swapped":          t.is_swapped,
+                "swapped_at":          t.swapped_at.isoformat() if t.swapped_at else None,
+                "swapped_by":          t.swapped_by.full_name if t.swapped_by else None,
+                "swap_group_id":       t.swap_group_id,
                 "swapped_with_course": t.swapped_with_course
             })
 
@@ -80,17 +79,19 @@ def teacher_timetable(current_user):
                 "message": "Profile incomplete - please contact admin"
             }), 200
         
-        # Try to find faculty record
+        # Try to find faculty record — must be scoped to college_id
         faculty = None
         if current_user.dept_id:
             faculty = Faculty.query.filter_by(
+                college_id=current_user.college_id,
                 faculty_name=current_user.full_name,
                 dept_id=current_user.dept_id
             ).first()
-            
+
             if not faculty:
-                # Try partial name match
+                # Try partial last-name match within same college
                 faculty = Faculty.query.filter(
+                    Faculty.college_id == current_user.college_id,
                     Faculty.faculty_name.contains(current_user.full_name.split()[-1]),
                     Faculty.dept_id == current_user.dept_id
                 ).first()
@@ -107,9 +108,10 @@ def teacher_timetable(current_user):
             
             faculty = Faculty(
                 faculty_name=current_user.full_name,
+                email=current_user.email,
                 max_hours=12,
                 dept_id=current_user.dept_id,
-                college_id=current_user.college_id  # Required for multi-tenant isolation
+                college_id=current_user.college_id
             )
             db.session.add(faculty)
             db.session.commit()

@@ -1,63 +1,55 @@
 course,section,faculty,room,day,start_time,year,semester
-maths,A,Yogesh,b-201,Wednesday,10:00,1,1
-maths,A,Yogesh,b-122,Wednesday,15:00,1,1
-maths,A,Yogesh,b-122,Thursday,10:00,1,1
-maths,A,Yogesh,g-203,Friday,17:00,1,1
-maths,B,Yogesh,b-122,Wednesday,16:00,1,1
-maths,B,Yogesh,g-203,Friday,11:00,1,1
-maths,B,Yogesh,g-203,Friday,14:00,1,1
-maths,B,Yogesh,b-122,Friday,15:00,1,1
-computer network,B,N/A,b-201,Wednesday,14:00,3,6
-computer network,B,N/A,g-203,Wednesday,16:00,3,6
-computer network,B,N/A,b-121,Thursday,12:00,3,6
-computer network,B,N/A,b-122,Friday,11:00,3,6
-computer architecture,A,Anju gandhi,b-201,Monday,10:00,1,1
-computer architecture,A,Anju gandhi,g-203,Tuesday,10:00,1,1
-computer architecture,A,Anju gandhi,g-203,Wednesday,11:00,1,1
-computer architecture,A,Anju gandhi,b-122,Thursday,11:00,1,1
-computer architecture,B,Anju gandhi,b-201,Monday,13:00,1,1
-computer architecture,B,Anju gandhi,b-121,Tuesday,15:00,1,1
-computer architecture,B,Anju gandhi,g-203,Wednesday,12:00,1,1
-computer architecture,B,Anju gandhi,b-121,Thursday,10:00,1,1
-english,A,jaya rani,b-122,Monday,16:00,1,1
-english,A,jaya rani,b-201,Tuesday,15:00,1,1
-english,A,jaya rani,b-201,Friday,09:00,1,1
-english,A,jaya rani,b-201,Friday,12:00,1,1
-english,B,jaya rani,b-122,Monday,10:00,1,1
-english,B,jaya rani,b-121,Monday,15:00,1,1
-english,B,jaya rani,b-121,Monday,17:00,1,1
-english,B,jaya rani,b-122,Wednesday,11:00,1,1
-probablity,A,Stuti mehla,b-201,Tuesday,16:00,1,1
-probablity,A,Stuti mehla,g-203,Wednesday,13:00,1,1
-probablity,A,Stuti mehla,b-121,Wednesday,15:00,1,1
-probablity,A,Stuti mehla,b-201,Thursday,12:00,1,1
-probablity,B,Stuti mehla,b-122,Tuesday,09:00,1,1
-probablity,B,Stuti mehla,g-203,Tuesday,12:00,1,1
-probablity,B,Stuti mehla,b-121,Wednesday,14:00,1,1
-probablity,B,Stuti mehla,b-201,Thursday,11:00,1,1
-machine learning,A,Anju gandhi,g-203,Monday,12:00,1,1
-machine learning,A,Anju gandhi,g-203,Monday,14:00,1,1
-machine learning,A,Anju gandhi,b-201,Thursday,14:00,1,1
-machine learning,A,Anju gandhi,g-203,Thursday,16:00,1,1
-machine learning,B,Anju gandhi,b-122,Tuesday,16:00,1,1
-machine learning,B,Anju gandhi,b-201,Wednesday,09:00,1,1
-machine learning,B,Anju gandhi,b-121,Wednesday,13:00,1,1
-machine learning,B,Anju gandhi,b-122,Friday,13:00,1,1
+computer network,B,N/A,b-122,Tuesday,12:00,3,6
+computer network,B,N/A,g-203,Tuesday,13:00,3,6
+computer network,B,N/A,b-122,Wednesday,13:00,3,6
+computer network,B,N/A,g-203,Thursday,09:00,3,6
+computer architecture,A,Anju gandhi,b-121,Tuesday,13:00,1,1
+computer architecture,A,Anju gandhi,b-122,Thursday,13:00,1,1
+computer architecture,A,Anju gandhi,b-201,Thursday,16:00,1,1
+computer architecture,A,Anju gandhi,b-122,Thursday,17:00,1,1
+computer architecture,B,Anju gandhi,b-122,Tuesday,14:00,1,1
+computer architecture,B,Anju gandhi,b-122,Tuesday,16:00,1,1
+computer architecture,B,Anju gandhi,g-203,Wednesday,11:00,1,1
+computer architecture,B,Anju gandhi,g-203,Thursday,12:00,1,1
+english,A,jaya rani,g-203,Monday,12:00,1,1
+english,A,jaya rani,b-201,Wednesday,16:00,1,1
+english,A,jaya rani,g-203,Friday,11:00,1,1
+english,A,jaya rani,g-203,Friday,15:00,1,1
+english,B,jaya rani,g-203,Monday,11:00,1,1
+english,B,jaya rani,g-203,Monday,14:00,1,1
+english,B,jaya rani,b-121,Thursday,09:00,1,1
+english,B,jaya rani,b-121,Friday,16:00,1,1
+probablity,A,Stuti mehla,b-122,Monday,09:00,1,1
+probablity,A,Stuti mehla,b-121,Monday,13:00,1,1
+probablity,A,Stuti mehla,g-203,Tuesday,12:00,1,1
+probablity,A,Stuti mehla,b-122,Wednesday,17:00,1,1
+probablity,B,Stuti mehla,b-122,Tuesday,10:00,1,1
+probablity,B,Stuti mehla,g-203,Thursday,13:00,1,1
+probablity,B,Stuti mehla,b-121,Friday,12:00,1,1
+probablity,B,Stuti mehla,b-122,Friday,13:00,1,1
+machine learning,A,Anju gandhi,b-122,Monday,16:00,1,1
+machine learning,A,Anju gandhi,b-201,Wednesday,12:00,1,1
+machine learning,A,Anju gandhi,b-122,Wednesday,14:00,1,1
+machine learning,A,Anju gandhi,b-201,Friday,14:00,1,1
+machine learning,B,Anju gandhi,b-201,Monday,13:00,1,1
+machine learning,B,Anju gandhi,g-203,Thursday,10:00,1,1
+machine learning,B,Anju gandhi,b-201,Friday,11:00,1,1
+machine learning,B,Anju gandhi,b-122,Friday,15:00,1,1
 unix and linux,B,Preeti nehra,b-121,Monday,09:00,3,6
-unix and linux,B,Preeti nehra,b-122,Monday,12:00,3,6
-unix and linux,B,Preeti nehra,b-122,Monday,13:00,3,6
-unix and linux,B,Preeti nehra,b-122,Monday,17:00,3,6
-compiler design,B,N/A,b-121,Tuesday,09:00,3,6
-compiler design,B,N/A,b-122,Tuesday,12:00,3,6
-compiler design,B,N/A,g-203,Wednesday,17:00,3,6
-compiler design,B,N/A,b-201,Thursday,09:00,3,6
-compiler design,B,N/A,b-121,Thursday,11:00,3,6
-compiler design,B,N/A,g-203,Friday,16:00,3,6
-Advanced computer architecture,B,Geeta Verma,b-121,Tuesday,11:00,3,6
-Advanced computer architecture,B,Geeta Verma,g-203,Tuesday,17:00,3,6
-Advanced computer architecture,B,Geeta Verma,b-201,Friday,13:00,3,6
-Advanced computer architecture,B,Geeta Verma,b-201,Friday,15:00,3,6
-MPI,B,rita singh,b-122,Wednesday,10:00,3,6
-MPI,B,rita singh,g-203,Thursday,10:00,3,6
-MPI,B,rita singh,g-203,Thursday,15:00,3,6
-MPI,B,rita singh,b-121,Friday,14:00,3,6
+unix and linux,B,Preeti nehra,b-121,Wednesday,10:00,3,6
+unix and linux,B,Preeti nehra,b-121,Wednesday,14:00,3,6
+unix and linux,B,Preeti nehra,b-121,Thursday,16:00,3,6
+compiler design,B,N/A,g-203,Monday,13:00,3,6
+compiler design,B,N/A,b-201,Monday,14:00,3,6
+compiler design,B,N/A,b-121,Wednesday,11:00,3,6
+compiler design,B,N/A,g-203,Wednesday,16:00,3,6
+compiler design,B,N/A,b-121,Friday,15:00,3,6
+compiler design,B,N/A,b-121,Friday,17:00,3,6
+Advanced computer architecture,B,Geeta Verma,g-203,Tuesday,10:00,3,6
+Advanced computer architecture,B,Geeta Verma,b-122,Tuesday,11:00,3,6
+Advanced computer architecture,B,Geeta Verma,b-201,Friday,10:00,3,6
+Advanced computer architecture,B,Geeta Verma,g-203,Friday,12:00,3,6
+MPI,B,rita singh,b-122,Thursday,12:00,3,6
+MPI,B,rita singh,g-203,Thursday,14:00,3,6
+MPI,B,rita singh,b-121,Thursday,17:00,3,6
+MPI,B,rita singh,g-203,Friday,09:00,3,6

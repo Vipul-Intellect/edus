@@ -113,7 +113,8 @@ def upload_faculty(current_user):
         if not file:
             return jsonify({"error": "No file uploaded"}), 400
         df = read_file(file)
-        required_cols = ['faculty_name', 'dept_name', 'username', 'password', 'email', 'max_hours']
+        required_cols = ['faculty_name', 'dept_name', 'username', 'password', 'max_hours']
+        # email is optional — a faculty member may not have one yet
         missing_cols = [c for c in required_cols if c not in df.columns]
         if missing_cols:
             return jsonify({"error": f"CSV must contain columns: {', '.join(missing_cols)}"}), 400
@@ -131,16 +132,18 @@ def upload_faculty(current_user):
             dname = _safe_str(row['dept_name'])
             username = _safe_str(row['username'])
             password = _safe_str(row['password'])
-            email = _safe_email(row['email'])
             raw_max_hours = _safe_str(row['max_hours'])
 
-            if not fname or not dname or not username or not password or not email or not raw_max_hours:
+            if not fname or not dname or not username or not password or not raw_max_hours:
                 skipped += 1
                 skip_reasons.append(
                     f"Row {row_num}: missing one or more required fields "
-                    "(faculty_name, dept_name, username, password, email, max_hours)"
+                    "(faculty_name, dept_name, username, password, max_hours)"
                 )
                 continue
+
+            # email is optional — read it only if the column exists
+            email = _safe_email(row['email']) if 'email' in df.columns else ""
 
             try:
                 max_hours = int(float(raw_max_hours))

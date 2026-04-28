@@ -60,6 +60,10 @@ def admin_manage_user(current_user, user_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Security: ensure this user belongs to admin's college
+    if user.college_id != current_user.college_id:
+        return jsonify({"error": "User not found"}), 404
+
     if request.method == "PUT":
         try:
             data = request.json or {}
@@ -121,17 +125,20 @@ def admin_manage_user(current_user, user_id):
 @token_required
 @admin_required
 def admin_stats(current_user):
-    """Get system statistics"""
+    """Get system statistics scoped to this college"""
     try:
-        total_users = User.query.count()
-        pending_leaves = LeaveRequest.query.filter_by(status='pending').count()
-        pending_swaps = SwapRequest.query.filter_by(status='pending').count()
-        
+        college_id = current_user.college_id
+        total_users    = User.query.filter_by(college_id=college_id).count()
+        pending_leaves = LeaveRequest.query.join(User, LeaveRequest.user_id == User.id).filter(
+            User.college_id == college_id, LeaveRequest.status == 'pending'
+        ).count()
+        pending_swaps  = SwapRequest.query.filter_by(status='pending').count()  # SwapRequest has no direct college_id
+
         return jsonify({
-            "total_users": total_users,
+            "total_users":      total_users,
             "pending_requests": pending_leaves + pending_swaps,
-            "pending_leaves": pending_leaves,
-            "pending_swaps": pending_swaps
+            "pending_leaves":   pending_leaves,
+            "pending_swaps":    pending_swaps
         })
     except Exception as e:
         return jsonify({"error": f"Failed to fetch stats: {str(e)}"}), 500
@@ -221,7 +228,7 @@ def admin_faculty(current_user):
 @admin_required
 def admin_manage_faculty(current_user, faculty_id):
     faculty = Faculty.query.get(faculty_id)
-    if not faculty:
+    if not faculty or faculty.college_id != current_user.college_id:
         return jsonify({"error": "Faculty not found"}), 404
 
     if request.method == "PUT":
@@ -450,7 +457,7 @@ def admin_courses(current_user):
 @admin_required
 def admin_manage_course(current_user, course_id):
     course = Course.query.get(course_id)
-    if not course:
+    if not course or course.college_id != current_user.college_id:
         return jsonify({"error": "Course not found"}), 404
 
     if request.method == "PUT":
@@ -638,7 +645,9 @@ def admin_sections(current_user):
 @token_required
 @admin_required
 def admin_manage_student(current_user, student_id):
-    student = User.query.filter_by(id=student_id, role='student').first()
+    student = User.query.filter_by(
+        id=student_id, role='student', college_id=current_user.college_id
+    ).first()
     if not student:
         return jsonify({"error": "Student not found"}), 404
     if request.method == "GET":
@@ -690,7 +699,12 @@ def admin_delete_bulk_students(current_user):
             return jsonify({"error": "A list of 'student_ids' is required"}), 400
         if not ids:
             return jsonify({"message": "No student IDs provided."}), 200
-        num_deleted = User.query.filter(User.id.in_(ids), User.role == 'student').delete(synchronize_session=False)
+        # College-scoped delete to prevent cross-tenant deletion
+        num_deleted = User.query.filter(
+            User.id.in_(ids),
+            User.role == 'student',
+            User.college_id == current_user.college_id
+        ).delete(synchronize_session=False)
         db.session.commit()
         export_csvs()
         return jsonify({"message": f"Successfully deleted {num_deleted} students."}), 200
@@ -766,9 +780,14 @@ def delete_unavailability(current_user, slot_id):
 @token_required
 @admin_required
 def admin_get_swap_requests(current_user):
+    """Get swap requests — scoped to this college via faculty membership"""
     status_filter = request.args.get('status', 'pending')
-    requests = SwapRequest.query.filter_by(status=status_filter).all()
-    
+    college_id = current_user.college_id
+    # SwapRequest has no college_id; filter via the faculty's college
+    all_requests = SwapRequest.query.filter_by(status=status_filter).all()
+    college_faculty_ids = {f.faculty_id for f in Faculty.query.filter_by(college_id=college_id).all()}
+    requests = [r for r in all_requests if r.requesting_faculty_id in college_faculty_ids]
+
     return jsonify([{
         "id": r.id,
         "requesting_faculty": r.requesting_faculty.faculty_name,
@@ -1089,35 +1108,43 @@ def admin_bulk_leave_action(current_user):
 def generate_timetable(current_user):
     if request.method != "POST":
         return jsonify({"message": "Use POST (no body) to generate timetable"}), 200
-    
+
     try:
-        result = generate_timetable_internal()
+        college_id = current_user.college_id
+        result = generate_timetable_internal(college_id=college_id)
+
         if "error" in result:
-            return jsonify(result), 400
-            
-        timetable = Timetable.query.all()
+            # Return diagnostics alongside the error so the frontend can display them
+            return jsonify({
+                "error":        result["error"],
+                "diagnostics":  result.get("diagnostics", []),
+                "solver_status": result.get("solver_status", "INFEASIBLE")
+            }), 400
+
+        timetable = Timetable.query.filter_by(college_id=college_id).all()
         result_data = []
-        
+
         for t in timetable:
             result_data.append({
-                "course": t.course.name,
-                "section": f"{t.section.name} (Year {t.section.year})",
-                "faculty": t.faculty.faculty_name if t.faculty else "N/A",
-                "room": t.room.name,
-                "day": t.day,
-                "start_time": t.start_time,
-                "department": t.course.department.dept_name,
-                "year": t.section.year,
-                "credits": t.course.credits
+                "course":      t.course.name if t.course else "N/A",
+                "section":     f"{t.section.name} (Year {t.section.year})" if t.section else "N/A",
+                "faculty":     t.faculty.faculty_name if t.faculty else "Unassigned",
+                "room":        t.room.name if t.room else "N/A",
+                "day":         t.day,
+                "start_time":  t.start_time,
+                "department":  t.course.department.dept_name if t.course and t.course.department else "N/A",
+                "year":        t.section.year if t.section else None,
+                "credits":     t.course.credits if t.course else None
             })
-            
+
         return jsonify({
-            "message": "Timetable generated successfully!",
-            "stats": result.get("stats"),
+            "message":   result.get("message", "Timetable generated successfully!"),
+            "stats":     result.get("stats"),
             "timetable": result_data
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 @admin_bp.route("/users/register", methods=["POST", "OPTIONS"])
@@ -1126,17 +1153,20 @@ def generate_timetable(current_user):
 def admin_register_user(current_user):
     try:
         data = request.json or {}
-        role = data.get("role")
+        role     = data.get("role")
         username = data.get("username")
         password = data.get("password")
-        
+        college_id = current_user.college_id
+
         if not role or not username or not password:
             return jsonify({"error": "Username, password and role are required"}), 400
-            
-        if User.query.filter_by(username=username).first():
+
+        # Scope username uniqueness to this college
+        if User.query.filter_by(college_id=college_id, username=username).first():
             return jsonify({"error": "Username already exists"}), 400
-            
+
         user = User(
+            college_id=college_id,
             username=username,
             role=role,
             full_name=data.get("full_name"),
@@ -1144,48 +1174,53 @@ def admin_register_user(current_user):
             phone=data.get("phone")
         )
         user.set_password(password)
-        
-        dept_name = data.get("dept_name")
+
+        dept_name  = data.get("dept_name")
         department = None
         if dept_name:
-            department = Department.query.filter_by(dept_name=dept_name).first()
+            # Scope dept lookup to this college
+            department = Department.query.filter_by(college_id=college_id, dept_name=dept_name).first()
             if not department:
                 return jsonify({"error": "Department not found"}), 404
             user.dept_id = department.id
-            
+
         if role == "student":
-            user.year = data.get("year")
+            user.year        = data.get("year")
             user.roll_number = data.get("roll_number")
-            section_name = data.get("section_name")
-            
+            section_name     = data.get("section_name")
+
             if user.year and section_name and department:
                 section = Section.query.filter_by(
-                    name=section_name, 
-                    year=user.year, 
+                    college_id=college_id,
+                    name=section_name,
+                    year=user.year,
                     dept_id=department.id
                 ).first()
                 if section:
                     user.section_id = section.id
-        
+
         elif role == "teacher":
-            # Check if faculty entry exists or create it
             if department and user.full_name:
-                faculty = Faculty.query.filter_by(faculty_name=user.full_name, dept_id=department.id).first()
+                faculty = Faculty.query.filter_by(
+                    college_id=college_id, faculty_name=user.full_name, dept_id=department.id
+                ).first()
                 if not faculty:
                     faculty = Faculty(
+                        college_id=college_id,
                         faculty_name=user.full_name,
                         dept_id=department.id,
                         email=user.email,
-                        max_hours=12 # Default
+                        max_hours=12
                     )
                     db.session.add(faculty)
-        
+
         db.session.add(user)
         db.session.commit()
-        
+
         return jsonify({"message": f"{role.capitalize()} registered successfully", "user_id": user.id}), 201
-        
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": f"Failed to register user: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
+
 
