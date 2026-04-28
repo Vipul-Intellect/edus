@@ -28,25 +28,30 @@ export default function Courses() {
 
   const loadData = async () => {
     setIsLoading(true);
-    const [coursesData, sectionsData] = await Promise.all([
-      api.getCoursesLegacy(),
-      api.getSections()
-    ]);
+    try {
+      const [coursesData, sectionsData] = await Promise.all([
+        api.getCourses(),
+        api.getSections()
+      ]);
 
-    const courseList = Array.isArray(coursesData) ? coursesData : (coursesData?.courses || coursesData?.data || []);
-    const sectionList = Array.isArray(sectionsData) ? sectionsData : (sectionsData?.sections || sectionsData?.data || []);
+      const courseList = Array.isArray(coursesData) ? coursesData : (coursesData?.courses || coursesData?.data || []);
+      const sectionList = Array.isArray(sectionsData) ? sectionsData : (sectionsData?.sections || sectionsData?.data || []);
 
-    setCourses(courseList);
-    setSections(sectionList);
+      setCourses(courseList);
+      setSections(sectionList);
 
-    // Extract unique departments from sections
-    const uniqueDepts = [...new Set(
-      sectionList
-        .map(s => s.dept_name)
-        .filter(Boolean)
-    )];
-    setDepartments(uniqueDepts);
-    setIsLoading(false);
+      // Extract unique departments from sections
+      const uniqueDepts = [...new Set(
+        sectionList
+          .map(s => s.dept_name)
+          .filter(Boolean)
+      )];
+      setDepartments(uniqueDepts);
+    } catch (err) {
+      console.error("Failed to load courses:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (courseData) => {

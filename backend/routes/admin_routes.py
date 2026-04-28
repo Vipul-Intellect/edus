@@ -140,9 +140,10 @@ def admin_stats(current_user):
 @token_required
 @admin_required
 def admin_departments(current_user):
+    college_id = current_user.college_id
     if request.method == "GET":
         try:
-            depts = Department.query.all()
+            depts = Department.query.filter_by(college_id=college_id).all()
             return jsonify([{"id": d.id, "dept_name": d.dept_name} for d in depts])
         except Exception as e:
             return jsonify({"error": f"Failed to fetch departments: {str(e)}"}), 500
@@ -152,9 +153,9 @@ def admin_departments(current_user):
             if not data or not data.get("dept_name"):
                 return jsonify({"error": "Department name is required"}), 400
             name = data["dept_name"].strip()
-            if Department.query.filter_by(dept_name=name).first():
+            if Department.query.filter_by(college_id=college_id, dept_name=name).first():
                 return jsonify({"error": "Department already exists"}), 400
-            dept = Department(dept_name=name)
+            dept = Department(college_id=college_id, dept_name=name)
             db.session.add(dept)
             db.session.commit()
             export_csvs()
@@ -168,9 +169,10 @@ def admin_departments(current_user):
 @token_required
 @admin_required
 def admin_faculty(current_user):
+    college_id = current_user.college_id
     if request.method == "GET":
         try:
-            faculty = Faculty.query.all()
+            faculty = Faculty.query.filter_by(college_id=college_id).all()
             return jsonify([
                 {
                     "id": f.faculty_id,
@@ -188,16 +190,19 @@ def admin_faculty(current_user):
             data = request.json
             if not data or not data.get("faculty_name") or not data.get("dept_name"):
                 return jsonify({"error": "Faculty name and department are required"}), 400
-            dept = Department.query.filter_by(dept_name=data["dept_name"]).first()
+            dept = Department.query.filter_by(college_id=college_id, dept_name=data["dept_name"]).first()
             if not dept:
                 return jsonify({"error": "Department not found"}), 404
-            if Faculty.query.filter_by(faculty_name=data["faculty_name"].strip()).first():
+            if Faculty.query.filter_by(college_id=college_id, faculty_name=data["faculty_name"].strip()).first():
                 return jsonify({"error": "Faculty member already exists"}), 400
+            # Also create/link a User account for this faculty member so they can log in
+            email = data.get("email", "").strip() if data.get("email") else None
             faculty = Faculty(
+                college_id=college_id,
                 faculty_name=data["faculty_name"].strip(),
                 max_hours=data.get("max_hours", 12),
                 dept_id=dept.id,
-                email=data.get("email", "").strip() if data.get("email") else None,
+                email=email,
                 subject=data.get("subject", "").strip() if data.get("subject") else None
             )
             db.session.add(faculty)
@@ -328,9 +333,10 @@ def admin_students(current_user):
 @token_required
 @admin_required
 def admin_courses(current_user):
+    college_id = current_user.college_id
     if request.method == "GET":
         try:
-            courses = Course.query.all()
+            courses = Course.query.filter_by(college_id=college_id).all()
             return jsonify([
                 {
                     "id": c.course_id,
@@ -342,6 +348,7 @@ def admin_courses(current_user):
                     "semester": c.semester,
                     "dept_name": c.department.dept_name if c.department else None,
                     "faculty_name": c.faculty.faculty_name if c.faculty else None,
+                    "faculty_id": c.faculty_id,
                     "is_fixed": c.is_fixed,
                     "fixed_day": c.fixed_day,
                     "fixed_slot": c.fixed_slot,
@@ -363,15 +370,15 @@ def admin_courses(current_user):
             if missing_fields:
                 return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
             
-            dept = Department.query.filter_by(dept_name=data["dept_name"]).first()
+            dept = Department.query.filter_by(college_id=college_id, dept_name=data["dept_name"]).first()
             if not dept:
                 return jsonify({"error": f"Department '{data['dept_name']}' not found"}), 404
             
             faculty_id = data.get("faculty_id")
             if faculty_id:
-                faculty = Faculty.query.get(faculty_id)
+                faculty = Faculty.query.filter_by(college_id=college_id, faculty_id=faculty_id).first()
                 if not faculty:
-                    return jsonify({"error": f"Faculty with ID {faculty_id} not found"}), 404
+                    return jsonify({"error": f"Faculty with ID {faculty_id} not found in this college"}), 404
             
             is_fixed = data.get("is_fixed", False)
             fixed_day = data.get("fixed_day")
@@ -385,6 +392,7 @@ def admin_courses(current_user):
                     return jsonify({"error": f"Fixed room with ID {fixed_room_id} not found."}), 404
 
             existing_course = Course.query.filter_by(
+                college_id=college_id,
                 name=data["name"].strip(),
                 dept_id=dept.id,
                 year=data["year"],
@@ -394,6 +402,7 @@ def admin_courses(current_user):
                 return jsonify({"error": "Course already exists for this department/year/semester"}), 400
             
             new_course = Course(
+                college_id=college_id,
                 name=data["name"].strip(),
                 type=data["type"].strip(),
                 credits=data.get("credits", 0),
@@ -502,9 +511,10 @@ def admin_manage_course(current_user, course_id):
 def admin_rooms(current_user):
     from models import Classroom
     from utils.export_utils import export_csvs
+    college_id = current_user.college_id
     if request.method == "GET":
         try:
-            rooms = Classroom.query.all()
+            rooms = Classroom.query.filter_by(college_id=college_id).all()
             return jsonify([
                 {
                     "id": r.room_id,
@@ -522,6 +532,7 @@ def admin_rooms(current_user):
             if not data or not data.get("name") or not data.get("capacity"):
                 return jsonify({"error": "Room name and capacity are required"}), 400
             room = Classroom(
+                college_id=college_id,
                 name=data["name"],
                 capacity=data["capacity"],
                 resources=data.get("resources", "")
@@ -538,13 +549,14 @@ def admin_rooms(current_user):
 @token_required
 @admin_required
 def admin_sections(current_user):
+    college_id = current_user.college_id
     if request.method == "GET":
         try:
             dept_name = request.args.get("dept_name")
             year = request.args.get("year")
-            query = Section.query
+            query = Section.query.filter_by(college_id=college_id)
             if dept_name:
-                dept = Department.query.filter_by(dept_name=dept_name).first()
+                dept = Department.query.filter_by(college_id=college_id, dept_name=dept_name).first()
                 if not dept:
                     return jsonify([]), 200
                 query = query.filter_by(dept_id=dept.id)
@@ -583,16 +595,16 @@ def admin_sections(current_user):
             except (ValueError, TypeError):
                 return jsonify({"error": "Year must be an integer"}), 400
 
-            dept = Department.query.filter_by(dept_name=dept_name).first()
+            dept = Department.query.filter_by(college_id=college_id, dept_name=dept_name).first()
             if not dept:
                 return jsonify({"error": "Department not found"}), 404
 
             letter = (name or "").strip().upper() if name else None
             if letter:
-                if Section.query.filter_by(dept_id=dept.id, year=year, name=letter).first():
+                if Section.query.filter_by(college_id=college_id, dept_id=dept.id, year=year, name=letter).first():
                     return jsonify({"error": f"Section {letter} already exists"}), 400
             else:
-                used = {s.name for s in Section.query.filter_by(dept_id=dept.id, year=year).all()}
+                used = {s.name for s in Section.query.filter_by(college_id=college_id, dept_id=dept.id, year=year).all()}
                 for ch in [chr(i) for i in range(65, 91)]:  # A-Z
                     if ch not in used:
                         letter = ch
@@ -600,7 +612,7 @@ def admin_sections(current_user):
                 if not letter:
                     return jsonify({"error": "No available section letters left"}), 400
 
-            section = Section(name=letter, year=year, dept_id=dept.id, max_hours_per_day=max_hours)
+            section = Section(college_id=college_id, name=letter, year=year, dept_id=dept.id, max_hours_per_day=max_hours)
             db.session.add(section)
             db.session.commit()
             

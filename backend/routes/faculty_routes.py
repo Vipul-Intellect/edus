@@ -102,20 +102,40 @@ def get_rooms_status(current_user):
 @teacher_required
 def teacher_swap_requests(current_user):
     try:
-        faculty = Faculty.query.filter_by(faculty_name=current_user.full_name, dept_id=current_user.dept_id).first()
-        if not faculty:
-            # Fallback - try strictly by name pattern or create
-            faculty = Faculty.query.filter(
-                Faculty.faculty_name.contains(current_user.full_name.split()[-1]),
-                Faculty.dept_id == current_user.dept_id
+        college_id = current_user.college_id
+        # Try to find the faculty record — prefer email match, then name+dept match
+        faculty = None
+        if current_user.email:
+            faculty = Faculty.query.filter_by(
+                college_id=college_id,
+                email=current_user.email
             ).first()
-        
+
         if not faculty:
+            faculty = Faculty.query.filter_by(
+                college_id=college_id,
+                faculty_name=current_user.full_name,
+                dept_id=current_user.dept_id
+            ).first()
+
+        if not faculty:
+            # Fallback - try by last name within the same dept
+            last_name = current_user.full_name.split()[-1] if current_user.full_name else ""
+            if last_name:
+                faculty = Faculty.query.filter(
+                    Faculty.college_id == college_id,
+                    Faculty.faculty_name.contains(last_name),
+                    Faculty.dept_id == current_user.dept_id
+                ).first()
+
+        if not faculty:
+            # Auto-create a linked faculty record so the teacher can use swap features
             faculty = Faculty(
+                college_id=college_id,
                 faculty_name=current_user.full_name,
                 max_hours=12,
                 dept_id=current_user.dept_id,
-                college_id=current_user.college_id  # Required for multi-tenant isolation
+                email=current_user.email
             )
             db.session.add(faculty)
             db.session.commit()
@@ -131,6 +151,7 @@ def teacher_swap_requests(current_user):
                 return jsonify({"error": "You can only request to move your own classes."}), 403
 
             new_request = SwapRequest(
+                college_id=college_id,
                 requesting_faculty_id=faculty.faculty_id,
                 original_timetable_id=data['original_timetable_id'],
                 proposed_day=data['proposed_day'],

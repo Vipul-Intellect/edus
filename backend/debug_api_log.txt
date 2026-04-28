@@ -1775,3 +1775,27 @@ Found 2 swap requests.
 GET /swap-requests: User=Preeti nehra (ID 23)
 Resolved Faculty ID: 9
 Found 2 swap requests.
+GET /swap-requests: User=rita singh (ID 103)
+Resolved Faculty ID: 16
+Found 0 swap requests.
+GET /swap-requests: User=rita singh (ID 103)
+Resolved Faculty ID: 16
+Found 0 swap requests.
+GET /swap-requests: User=rita singh (ID 103)
+Resolved Faculty ID: 16
+Found 0 swap requests.
+GET /swap-requests: User=rita singh (ID 103)
+Resolved Faculty ID: 16
+Found 0 swap requests.
+GET /swap-requests: User=rita singh (ID 103)
+Resolved Faculty ID: 16
+Found 0 swap requests.
+GET /swap-requests: User=rita singh (ID 103)
+Resolved Faculty ID: 16
+Found 0 swap requests.
+GET /swap-requests: User=rita singh (ID 103)
+Resolved Faculty ID: 16
+Found 0 swap requests.
+GET /swap-requests: User=rita singh (ID 103)
+Resolved Faculty ID: 16
+Found 0 swap requests.

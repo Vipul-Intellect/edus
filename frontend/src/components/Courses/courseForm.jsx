@@ -30,11 +30,17 @@ export default function CourseForm({ course, onSubmit, onCancel }) {
           api.getFaculty(),
           api.getSections()
         ]);
-        setFaculty(facultyData);
+
+        // getFaculty returns an array directly
+        const facultyList = Array.isArray(facultyData) ? facultyData : (facultyData?.faculty || []);
+        setFaculty(facultyList);
+
+        // getSections returns an array directly
+        const sectionList = Array.isArray(sectionsData) ? sectionsData : (sectionsData?.sections || []);
 
         // Extract unique departments from sections
         const uniqueDepts = [...new Set(
-          sectionsData
+          sectionList
             .map(s => s.dept_name)
             .filter(Boolean)
         )];
@@ -113,12 +119,16 @@ export default function CourseForm({ course, onSubmit, onCancel }) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="faculty_id">Faculty *</Label>
-              <Select value={formData.faculty_id.toString()} onValueChange={(value) => handleChange('faculty_id', parseInt(value))}>
+              <Label htmlFor="faculty_id">Assign Faculty</Label>
+              <Select
+                value={formData.faculty_id ? formData.faculty_id.toString() : "__none__"}
+                onValueChange={(value) => handleChange('faculty_id', value === "__none__" ? null : parseInt(value))}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select faculty" />
+                  <SelectValue placeholder="Select faculty (optional)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">— Unassigned —</SelectItem>
                   {faculty.map(f => (
                     <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>
                   ))}

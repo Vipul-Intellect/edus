@@ -478,6 +478,7 @@ def upload_courses(current_user):
             
         added_count = 0
         skipped_count = 0
+        college_id = current_user.college_id
         
         for _, row in df.iterrows():
             # Get data and strip whitespace
@@ -486,27 +487,28 @@ def upload_courses(current_user):
                 skipped_count += 1
                 continue
                 
-            # Find department by name
+            # Find department by name, scoped to this college
             dept_name = str(row['dept_name']).strip() if pd.notna(row['dept_name']) else ""
-            dept = Department.query.filter_by(dept_name=dept_name).first()
+            dept = Department.query.filter_by(college_id=college_id, dept_name=dept_name).first()
             if not dept:
                 skipped_count += 1
                 continue
                 
             # Check if course already exists in that department
-            if Course.query.filter_by(name=c_name, dept_id=dept.id).first():
+            if Course.query.filter_by(college_id=college_id, name=c_name, dept_id=dept.id).first():
                 skipped_count += 1
                 continue
                 
-            # Optional faculty assignment
+            # Optional faculty assignment, scoped to this college
             faculty_id = None
             if 'faculty_name' in df.columns and pd.notna(row['faculty_name']):
                 f_name = str(row['faculty_name']).strip()
-                faculty = Faculty.query.filter_by(faculty_name=f_name).first()
+                faculty = Faculty.query.filter_by(college_id=college_id, faculty_name=f_name).first()
                 if faculty:
                     faculty_id = faculty.faculty_id
                     
             course = Course(
+                college_id=college_id,
                 name=c_name,
                 type=str(row['type']).strip() if pd.notna(row['type']) else "Core",
                 credits=int(row['credits']) if pd.notna(row['credits']) else 4,
