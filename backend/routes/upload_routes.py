@@ -527,6 +527,7 @@ def upload_courses(current_user):
             return jsonify({"error": f"CSV must contain columns: {', '.join(missing_cols)}"}), 400
             
         added_count = 0
+        updated_count = 0
         skipped_count = 0
         skip_reasons = []
         college_id = current_user.college_id
@@ -548,12 +549,6 @@ def upload_courses(current_user):
                 skip_reasons.append(f"Row {row_num}: department '{dept_name}' not found for this college")
                 continue
                 
-            # Check if course already exists in that department
-            if Course.query.filter_by(college_id=college_id, name=c_name, dept_id=dept.id).first():
-                skipped_count += 1
-                skip_reasons.append(f"Row {row_num}: course '{c_name}' already exists in '{dept_name}'")
-                continue
-                
             # Optional faculty assignment, scoped to this college
             faculty_id = None
             if 'faculty_name' in df.columns and pd.notna(row['faculty_name']):
@@ -561,26 +556,38 @@ def upload_courses(current_user):
                 faculty = Faculty.query.filter_by(college_id=college_id, faculty_name=f_name).first()
                 if faculty:
                     faculty_id = faculty.faculty_id
-                    
-            course = Course(
+
+            course_data = {
+                "type": str(row['type']).strip() if pd.notna(row['type']) else "Core",
+                "credits": int(float(row['credits'])) if pd.notna(row['credits']) else 4,
+                "year": int(float(row['year'])) if pd.notna(row['year']) else 1,
+                "semester": int(float(row['semester'])) if pd.notna(row['semester']) else 1,
+                "dept_id": dept.id,
+                "faculty_id": faculty_id,
+                "hours_per_week": int(float(row['hours_per_week'])) if pd.notna(row['hours_per_week']) else 6,
+            }
+
+            existing_course = Course.query.filter_by(
                 college_id=college_id,
                 name=c_name,
-                type=str(row['type']).strip() if pd.notna(row['type']) else "Core",
-                credits=int(float(row['credits'])) if pd.notna(row['credits']) else 4,
-                year=int(float(row['year'])) if pd.notna(row['year']) else 1,
-                semester=int(float(row['semester'])) if pd.notna(row['semester']) else 1,
-                dept_id=dept.id,
-                faculty_id=faculty_id,
-                hours_per_week=int(float(row['hours_per_week'])) if pd.notna(row['hours_per_week']) else 6
-            )
-            db.session.add(course)
-            added_count += 1
+                dept_id=dept.id
+            ).first()
+
+            if existing_course:
+                for field, value in course_data.items():
+                    setattr(existing_course, field, value)
+                updated_count += 1
+            else:
+                course = Course(college_id=college_id, name=c_name, **course_data)
+                db.session.add(course)
+                added_count += 1
             
         db.session.commit()
         export_csvs()
         return jsonify({
-            "message": f"Successfully added {added_count} courses",
+            "message": f"Course import completed: {added_count} added, {updated_count} updated, {skipped_count} skipped",
             "added": added_count,
+            "updated": updated_count,
             "skipped": skipped_count,
             "skip_reasons": skip_reasons[:20]
         }), 200

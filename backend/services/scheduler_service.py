@@ -15,6 +15,204 @@ from models import (
 from services.email_service import send_email
 
 
+DAY_KEYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+HOUR_KEYS = ["08", "09", "10", "11", "12", "13", "14", "15", "16"]
+TIME_SLOTS = [f"{day}_{hour}" for day in DAY_KEYS for hour in HOUR_KEYS]
+DAY_MAP = {
+    "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday",
+    "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday"
+}
+TIME_MAP = {
+    "08": "08:00", "09": "09:00", "10": "10:00", "11": "11:00",
+    "12": "12:00", "13": "13:00", "14": "14:00", "15": "15:00",
+    "16": "16:00", "17": "17:00"
+}
+
+
+def _persist_schedule(college_id, faculty, rooms, scheduled_items, courses_scheduled, status_name, source):
+    """Persist a prepared schedule list into the Timetable table."""
+    faculty_dict = {f.faculty_id: f for f in faculty}
+    room_dict = {r.room_id: r for r in rooms}
+
+    try:
+        if college_id:
+            Timetable.query.filter_by(college_id=college_id).delete()
+        else:
+            Timetable.query.delete()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return {"error": f"Failed to clear existing timetable: {str(e)}"}
+
+    timetable_entries = []
+    timetable_data = []
+
+    for item in scheduled_items:
+        course = item["course"]
+        section = item["section"]
+        room_id = item["room_id"]
+        slot = item["slot"]
+        raw_day, raw_time = slot.split("_", 1)
+
+        entry = Timetable(
+            college_id=college_id or course.college_id,
+            course_id=course.course_id,
+            section_id=section.id,
+            faculty_id=course.faculty_id,
+            room_id=room_id,
+            day=DAY_MAP.get(raw_day, raw_day),
+            start_time=TIME_MAP.get(raw_time, f"{raw_time}:00")
+        )
+        timetable_entries.append(entry)
+        timetable_data.append({
+            "course": course.name,
+            "section": section.name,
+            "faculty": (
+                faculty_dict[course.faculty_id].faculty_name
+                if course.faculty_id and course.faculty_id in faculty_dict
+                else "Unassigned"
+            ),
+            "room": room_dict[room_id].name if room_id in room_dict else "Room",
+            "day": entry.day,
+            "start_time": entry.start_time,
+            "year": course.year,
+            "semester": course.semester,
+        })
+
+    try:
+        db.session.add_all(timetable_entries)
+        db.session.commit()
+        os.makedirs("output", exist_ok=True)
+
+        file_path = "output/timetable_final.csv"
+        pd.DataFrame(timetable_data).to_csv(file_path, index=False)
+        print(f"[Scheduler] Timetable saved via {source} - {len(timetable_entries)} entries.")
+
+        try:
+            faculty_emails = [f.email for f in faculty if f.email]
+            if faculty_emails:
+                send_email(
+                    subject="New Timetable Generated",
+                    recipients=faculty_emails,
+                    body=(
+                        "Hello,\n\nThe timetable has been updated. "
+                        "Please log in to view your schedule.\n\nRegards,\nTimetable System"
+                    ),
+                    attachment_path=file_path
+                )
+        except Exception as mail_err:
+            print(f"[Scheduler] Email send failed (non-fatal): {mail_err}")
+
+        return {
+            "success": True,
+            "message": (
+                f"Timetable generated successfully - {len(timetable_entries)} slots scheduled."
+                if source == "cp_sat"
+                else f"Timetable generated successfully using traditional fallback - {len(timetable_entries)} slots scheduled."
+            ),
+            "stats": {
+                "entries": len(timetable_entries),
+                "courses_scheduled": courses_scheduled,
+                "solver_status": status_name,
+                "source": source,
+            }
+        }
+    except Exception as e:
+        db.session.rollback()
+        return {"success": False, "message": f"Failed to save timetable: {str(e)}"}
+
+
+def _traditional_schedule(schedulable_courses, rooms, unavailable_slots, relevant_sections_fn):
+    """
+    Deterministic fallback scheduler for production recovery.
+
+    It preserves hard room, section, and faculty no-overlap rules. It first respects
+    max_hours_per_day, then relaxes only that daily limit if the CP model is too strict.
+    """
+    room_busy = set()
+    section_busy = set()
+    faculty_busy = set()
+    section_day_counts = {}
+    course_section_day_counts = {}
+    slot_load = {slot: 0 for slot in TIME_SLOTS}
+    scheduled = []
+
+    def day_of(slot):
+        return slot.split("_", 1)[0]
+
+    def choose_slot(course, section, respect_daily_limit=True):
+        max_daily = getattr(section, "max_hours_per_day", 5) or 5
+        ordered_slots = sorted(
+            TIME_SLOTS,
+            key=lambda slot: (
+                course_section_day_counts.get((course.course_id, section.id, day_of(slot)), 0),
+                section_day_counts.get((section.id, day_of(slot)), 0),
+                slot_load.get(slot, 0),
+                DAY_KEYS.index(day_of(slot)),
+                HOUR_KEYS.index(slot.split("_", 1)[1]),
+            )
+        )
+
+        for slot in ordered_slots:
+            day = day_of(slot)
+            if respect_daily_limit and section_day_counts.get((section.id, day), 0) >= max_daily:
+                continue
+            if (section.id, slot) in section_busy:
+                continue
+            if course.faculty_id:
+                if (course.faculty_id, slot) in faculty_busy:
+                    continue
+                if (course.faculty_id, slot) in unavailable_slots:
+                    continue
+
+            for room in rooms:
+                if (room.room_id, slot) not in room_busy:
+                    return slot, room.room_id
+
+        return None, None
+
+    course_order = sorted(
+        schedulable_courses,
+        key=lambda c: (
+            -len(relevant_sections_fn(c)),
+            -int(c.hours_per_week or 0),
+            str(c.name).lower(),
+        )
+    )
+
+    for course in course_order:
+        for section in relevant_sections_fn(course):
+            for _ in range(int(course.hours_per_week or 0)):
+                slot, room_id = choose_slot(course, section, respect_daily_limit=True)
+                if slot is None:
+                    slot, room_id = choose_slot(course, section, respect_daily_limit=False)
+                if slot is None:
+                    return None, (
+                        f"Traditional fallback also could not place '{course.name}' "
+                        f"for section {section.name} year {section.year}. "
+                        "There are not enough free room/section/faculty slots."
+                    )
+
+                day = day_of(slot)
+                room_busy.add((room_id, slot))
+                section_busy.add((section.id, slot))
+                if course.faculty_id:
+                    faculty_busy.add((course.faculty_id, slot))
+                section_day_counts[(section.id, day)] = section_day_counts.get((section.id, day), 0) + 1
+                course_section_day_counts[(course.course_id, section.id, day)] = (
+                    course_section_day_counts.get((course.course_id, section.id, day), 0) + 1
+                )
+                slot_load[slot] += 1
+                scheduled.append({
+                    "course": course,
+                    "section": section,
+                    "room_id": room_id,
+                    "slot": slot,
+                })
+
+    return scheduled, None
+
+
 def generate_timetable_internal(college_id=None):
     """
     Generate timetable using constraint programming.
@@ -72,9 +270,8 @@ def generate_timetable_internal(college_id=None):
         }
 
     # ── 3. Build time slots ───────────────────────────────────────────────────
-    days  = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-    hours = ["08", "09", "10", "11", "12", "13", "14", "15", "16"]
-    time_slots = [f"{d}_{h}" for d in days for h in hours]  # 45 slots total
+    days = DAY_KEYS
+    time_slots = TIME_SLOTS  # 45 slots total
 
     # ── 4. Lookup tables ──────────────────────────────────────────────────────
     faculty_dict = {f.faculty_id: f for f in faculty}
@@ -267,7 +464,28 @@ def generate_timetable_internal(college_id=None):
                 "unavailability blocks, adding more classrooms, or splitting sections."
             )
 
-        detail = "  •  " + "\n  •  ".join(reasons)
+        print("[Scheduler] CP-SAT failed; trying traditional fallback scheduler.")
+        fallback_items, fallback_error = _traditional_schedule(
+            schedulable_courses=schedulable_courses,
+            rooms=rooms,
+            unavailable_slots=unavailable_slots,
+            relevant_sections_fn=_relevant_sections,
+        )
+        if fallback_items:
+            return _persist_schedule(
+                college_id=college_id,
+                faculty=faculty,
+                rooms=rooms,
+                scheduled_items=fallback_items,
+                courses_scheduled=len(schedulable_courses),
+                status_name=f"{status_name}_FALLBACK",
+                source="traditional_fallback",
+            )
+
+        if fallback_error:
+            reasons.append(fallback_error)
+
+        detail = "  -  " + "\n  -  ".join(reasons)
         return {
             "error": f"Could not generate a feasible timetable.\n{detail}",
             "solver_status": status_name,
