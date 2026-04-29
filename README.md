@@ -4,6 +4,13 @@
 
 ---
 
+## 🚀 Live Deployment
+
+**Production URL:** [https://edu-77160732294.asia-south1.run.app](https://edu-77160732294.asia-south1.run.app)  
+*Deployed securely via Google Cloud Run (GCP) backed by a managed PostgreSQL database.*
+
+---
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
@@ -848,7 +855,31 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 
 ## ☁️ Deployment
 
-### Render (Recommended — `render.yaml` included)
+### Google Cloud Run (GCP) — Active Production 🚀
+The system is fully Dockerized and optimized for Google Cloud Run, utilizing a multi-stage Dockerfile that bundles the React frontend (served via Nginx) alongside the Flask Gunicorn backend in a single container.
+
+**Active Live Environment:**
+- **URL:** [https://edu-77160732294.asia-south1.run.app](https://edu-77160732294.asia-south1.run.app)
+- **Region:** `asia-south1`
+- **Database:** Managed PostgreSQL instance.
+
+**GCP Deployment Commands:**
+```bash
+# 1. Build the production image
+gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/eduscheduler
+
+# 2. Deploy to Cloud Run
+gcloud run deploy eduscheduler \
+  --image gcr.io/YOUR_PROJECT_ID/eduscheduler \
+  --platform managed \
+  --region asia-south1 \
+  --allow-unauthenticated \
+  --set-env-vars="FLASK_ENV=production,DATABASE_URL=your_postgres_url,SECRET_KEY=...,FERNET_SECRET_KEY=...,GOOGLE_CLIENT_ID=...,GOOGLE_CLIENT_SECRET=..."
+```
+
+---
+
+### Render (Alternative / Dev Deployment)
 
 The `render.yaml` at project root provisions:
 - A **Python web service** running `gunicorn --chdir backend app:app`
